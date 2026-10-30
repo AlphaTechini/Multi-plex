@@ -14,7 +14,7 @@ func TestDefaultSettings(t *testing.T) {
 		got, want any
 	}{
 		{"Theme", s.Theme, "dark-plus"},
-		{"PrefixKey", s.PrefixKey, "ctrl+space"},
+		{"PrefixKey", s.PrefixKey, "ctrl+\\"},
 		{"AgentPanelWidth", s.AgentPanelWidth, 0.30},
 		{"AgentPanelMinCols", s.AgentPanelMinCols, 60},
 		{"ReduceMotion", s.ReduceMotion, false},

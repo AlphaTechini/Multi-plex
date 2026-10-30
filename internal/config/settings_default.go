@@ -4,7 +4,7 @@ package config
 func DefaultSettings() Settings {
 	return Settings{
 		Theme:              "dark-plus",
-		PrefixKey:          "ctrl+space",
+		PrefixKey:          "ctrl+\\",
 		AgentPanelWidth:    0.30,
 		AgentPanelMinCols:  60,
 		ReduceMotion:       false,

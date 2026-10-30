@@ -5,9 +5,9 @@ package config
 type Settings struct {
 	// Theme names a colour theme. The default is VS Code's Dark+.
 	Theme string `json:"theme"`
-	// PrefixKey is the prefix key for multiplexer commands.
-	// TODO(CC-09): placeholder until the capability check settles the default;
-	// see docs/15-open-questions.md Q2.
+	// PrefixKey is the prefix key for multiplexer commands. The default
+	// Ctrl+\ comes from CC-09 research and is proposed until it is verified
+	// by hand in each target terminal (docs/15-open-questions.md Q2).
 	PrefixKey string `json:"prefixKey"`
 	// AgentPanelWidth is the agent panel's share of the window width (0 to 1).
 	AgentPanelWidth float64 `json:"agentPanelWidth"`

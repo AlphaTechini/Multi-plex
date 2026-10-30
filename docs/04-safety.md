@@ -96,13 +96,16 @@ The approval prompt shows:
 1. Multiplex writes the hook configuration that sends Claude Code's `PreToolUse` events to `mpx hook pre-tool`.
 2. `mpx hook` forwards the tool name and input to the daemon.
 3. The daemon runs Layers 2 to 4. If gated, it runs Layer 5 and waits.
-4. `mpx hook` returns Claude Code's decision in `hookSpecificOutput` (`permissionDecision`: `allow`, `deny`, `ask` or `defer`, plus `permissionDecisionReason`). Exit code 2 also blocks.
+4. `mpx hook` returns Claude Code's decision in `hookSpecificOutput` (`permissionDecision`: `allow`, `deny` or `ask`; `defer` only applies in non-interactive `-p` mode, plus `permissionDecisionReason`). Exit code 2 also blocks.
 
 What Claude Code's hook docs say (checked Oct 2026), and what it means for us:
 
 - **Hooks fail open by default.** The default timeout for command hooks is 600 seconds, and a timed-out `PreToolUse` hook does **not** block the tool call unless the hook sets `"onFailure": "block"`. Our hook configuration must always set `onFailure: block`, and `mpx hook` must deny if it cannot reach the daemon. Fail closed.
 - **Hooks can rewrite tool input** (`updatedInput`). We can use this to route an approved command through `mpx exec`, which injects scoped credentials for that one command (Layer 3).
-- **Hook settings are live.** Edits to hook settings files are picked up automatically by a file watcher. An agent that edits a settings file could remove our hook mid-session. So: our hooks live in **user-level settings** (outside every worktree), file tools touching any Claude Code settings file are gated, and Layer 4 gates shell commands that write to them. CC-06 must also check whether project-level settings can disable user-level hooks.
+- **Hook settings are live.** Edits to hook settings files are picked up automatically by a file watcher. An agent that edits a settings file could remove our hook mid-session. File tools touching any Claude Code settings file are gated, and Layer 4 gates shell commands that write to them.
+- **Project settings can disable user-level hooks.** Claude Code's docs (checked Oct 2026) say `"disableAllHooks": true` in a repository's `.claude/settings.json` outranks user settings. So our hooks do **not** live in the user's `~/.claude/settings.json`. Each session is launched with `claude --settings <file>`, where the file sits in the daemon's data directory (outside every worktree) and holds our hooks plus `"disableAllHooks": false`. Command-line settings outrank project and local settings and merge with the user's own hooks. CC-06 must confirm that a project-level `disableAllHooks: true`, set before or during a session, cannot turn our hooks off.
+- **Hook commands use exec form** (`command` plus `args`), so no shell parses them on any OS, and on Windows the shell matcher is `Bash|PowerShell`.
+- **`PermissionRequest`** fires the moment Claude Code is about to show its own permission prompt; it is the "blocked" signal (the `Notification` hook fires only after a delay). A user interrupt produces no `Stop` event.
 
 ## Using the agent CLI's own sandbox (macOS, Linux)
 
