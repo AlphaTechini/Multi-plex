@@ -1,0 +1,62 @@
+diff --git a/added.txt b/added.txt
+new file mode 100644
+index 0000000..2fe4df4
+--- /dev/null
++++ b/added.txt
+@@ -0,0 +1,2 @@
++n1
++n2
+diff --git a/bin.dat b/bin.dat
+index bdc955b..8835708 100644
+Binary files a/bin.dat and b/bin.dat differ
+diff --git a/crlf.txt b/crlf.txt
+index 54d94e0..7e35c92 100644
+--- a/crlf.txt
++++ b/crlf.txt
+@@ -1,3 +1,3 @@
+ one
+ two
+-three
++THREE
+diff --git a/empty.txt b/empty.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/keep.txt b/keep.txt
+old mode 100644
+new mode 100755
+index de98044..a7bc997
+--- a/keep.txt
++++ b/keep.txt
+@@ -1,3 +1,4 @@
+ a
+-b
++B
+ c
++d
+diff --git a/old.go b/new.go
+similarity index 100%
+rename from old.go
+rename to new.go
+diff --git a/nonl.txt b/nonl.txt
+index eeed123..d83a7f0 100644
+--- a/nonl.txt
++++ b/nonl.txt
+@@ -1 +1 @@
+-tail
+\ No newline at end of file
++tail2
+\ No newline at end of file
+diff --git a/sp ace.txt b/sp ace.txt
+index ce01362..3b18e51 100644
+--- a/sp ace.txt	
++++ b/sp ace.txt	
+@@ -1 +1 @@
+-hello
++hello world
+diff --git "a/sp\303\251cial.go" "b/sp\303\251cial.go"
+index d905d9d..3811af3 100644
+--- "a/sp\303\251cial.go"
++++ "b/sp\303\251cial.go"
+@@ -1 +1 @@
+-e
++e2
