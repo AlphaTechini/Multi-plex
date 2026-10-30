@@ -6,7 +6,7 @@
 // Contract with the TUI for `mpx bench startup`: when the environment variable
 // MPX_BENCH_FIRST_FRAME=1 is set, the TUI renders its first frame, prints one
 // line "first_frame=<Go duration>" (for example "first_frame=84.3ms") to
-// standard output, and exits with status 0. The duration runs from the start
+// standard error (standard output belongs to the renderer), and exits with status 0. The duration runs from the start
 // of the process's main function to the first frame being written to the
 // terminal. The bench starts the TUI in a pseudo-terminal, once with no daemon
 // running ("cold": the TUI starts one) and several times with the daemon

@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -154,11 +153,11 @@ func TestRunBenchFirstFrame(t *testing.T) {
 	}
 	data, _ := io.ReadAll(r)
 	line := strings.TrimSpace(string(data))
-	var ms float64
-	if n, err := fmt.Sscanf(line, "first-frame-ms %f", &ms); n != 1 || err != nil {
+	d, err := time.ParseDuration(strings.TrimPrefix(line, "first_frame="))
+	if !strings.HasPrefix(line, "first_frame=") || err != nil {
 		t.Fatalf("stderr = %q", line)
 	}
-	if ms <= 0 || ms > 5000 {
-		t.Fatalf("first-frame-ms = %v", ms)
+	if d <= 0 || d > 5*time.Second {
+		t.Fatalf("first_frame = %v", d)
 	}
 }

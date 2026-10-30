@@ -77,7 +77,7 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 		m.blurred = true
 		return nil
 	case benchDoneMsg:
-		fmt.Fprintf(os.Stderr, "first-frame-ms %.3f\n", float64(msg.at.Sub(ProcessStart))/float64(time.Millisecond))
+		fmt.Fprintf(os.Stderr, "first_frame=%s\n", msg.at.Sub(ProcessStart))
 		m.quit = true
 		return tea.Quit
 	case tea.KeyPressMsg:
