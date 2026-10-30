@@ -22,6 +22,7 @@ type LaunchSpec struct {
 	WorktreePath  string
 	ConfigDir     string   // per-session directory the adapter may write config into
 	MpxPath       string   // absolute path of the mpx binary, for hook and MCP commands
+	HookCommand   []string // argv prefix for hook calls (the event name is appended); empty means MpxPath hook
 	Env           []string // scrubbed base environment (docs/04-safety.md Layer 3)
 	RolePrompt    string   // appended system prompt from the role, may be empty
 	AllowedTools  []string

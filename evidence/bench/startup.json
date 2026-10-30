@@ -1,0 +1,66 @@
+{
+  "name": "startup",
+  "at": "2026-10-30T13:59:41.356283825Z",
+  "machine": {
+    "os": "linux",
+    "arch": "amd64",
+    "cpus": 4,
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "go_version": "go1.26.10",
+    "term": "/linux"
+  },
+  "metrics": [
+    {
+      "name": "'mpx version' process (runtime + package init + exit)",
+      "stats": {
+        "n": 30,
+        "min_ms": 20.459262,
+        "mean_ms": 24.8920252,
+        "p50_ms": 23.964782,
+        "p95_ms": 31.151347,
+        "p99_ms": 31.967426,
+        "max_ms": 31.967426
+      }
+    },
+    {
+      "name": "hook process that exits at once (the floor for hook latency)",
+      "stats": {
+        "n": 30,
+        "min_ms": 3.761916,
+        "mean_ms": 4.6004255,
+        "p50_ms": 4.38658,
+        "p95_ms": 5.917816,
+        "p99_ms": 6.33415,
+        "max_ms": 6.33415
+      }
+    },
+    {
+      "name": "TUI first frame, cold (no daemon yet)",
+      "stats": {
+        "n": 3,
+        "min_ms": 24.642194,
+        "mean_ms": 32.756814999999996,
+        "p50_ms": 36.029513,
+        "p95_ms": 37.598738,
+        "p99_ms": 37.598738,
+        "max_ms": 37.598738
+      },
+      "budget": "\u003c 150ms p50",
+      "pass": true
+    },
+    {
+      "name": "TUI first frame, attach to running daemon",
+      "stats": {
+        "n": 10,
+        "min_ms": 2.754301,
+        "mean_ms": 3.9866316,
+        "p50_ms": 3.832426,
+        "p95_ms": 6.36155,
+        "p99_ms": 6.36155,
+        "max_ms": 6.36155
+      },
+      "budget": "\u003c 50ms p50",
+      "pass": true
+    }
+  ]
+}

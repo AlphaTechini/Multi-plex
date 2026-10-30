@@ -30,6 +30,7 @@ type Daemon struct {
 	paths    config.Paths
 	settings config.Settings
 	mpxPath  string
+	hookCmd  []string // argv prefix agents run for hooks; see HookCommand
 	version  string
 	approver string
 	nowFn    func() time.Time
@@ -80,6 +81,7 @@ func New(dp Deps) *Daemon {
 		paths:    dp.Paths,
 		settings: dp.Settings,
 		mpxPath:  dp.MpxPath,
+		hookCmd:  HookCommand(dp.MpxPath),
 		version:  dp.Version,
 		approver: dp.ApproverName,
 		nowFn:    dp.Now,

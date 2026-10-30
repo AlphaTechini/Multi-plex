@@ -53,7 +53,7 @@ func (Adapter) Prepare(spec agent.LaunchSpec) (agent.Launch, error) {
 	}
 	sessionID := string(spec.Session.ID)
 
-	settings, err := buildSettings(spec.MpxPath)
+	settings, err := buildSettings(spec)
 	if err != nil {
 		return agent.Launch{}, err
 	}

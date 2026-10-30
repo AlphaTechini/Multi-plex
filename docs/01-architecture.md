@@ -39,6 +39,7 @@ Multiplex is one Go binary with several roles, plus small platform helpers.
 | `mpx` | The TUI client. Starts the daemon if it is not running, then attaches. |
 | `mpx daemon` | The long-running daemon. One per user. Survives the TUI closing. |
 | `mpx hook <event>` | Called by an agent CLI's hook system (for example Claude Code `PreToolUse`). Forwards the event to the daemon and returns its decision. Must start and exit fast. |
+| `mpx-hook <event>` | The same hook entry point as a separate ~3 MB binary that links only the hook path. The daemon points agents at it when it sits next to `mpx` (and falls back to `mpx hook`), because the full binary's package initialisation (the TUI's syntax highlighter above all) costs ~20 ms per call, twice the hook budget. |
 | `mpx mcp` | A stdio MCP server the agent CLI launches. Gives agents tools such as `report_progress` and `note_to_user`, and forwards calls to the daemon. |
 | `mpx bench ...` | Performance measurements (see [03-performance.md](03-performance.md)). |
 

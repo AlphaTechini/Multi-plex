@@ -28,5 +28,5 @@ jobs:
       - name: Build
         run: go build -trimpath -ldflags "-s -w" -o bin/ ./cmd/...
       - name: Startup bench
-        run: go run ./cmd/mpx bench startup --runs 20
+        run: go run ./cmd/mpx bench startup
         continue-on-error: true

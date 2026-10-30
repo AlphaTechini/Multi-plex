@@ -131,7 +131,7 @@ func TestPrepareWritesConfig(t *testing.T) {
 // independent of the golden file.
 func TestSettingsShape(t *testing.T) {
 	mpx := absMpx(t)
-	raw, err := buildSettings(mpx)
+	raw, err := buildSettings(agent.LaunchSpec{MpxPath: mpx})
 	if err != nil {
 		t.Fatal(err)
 	}

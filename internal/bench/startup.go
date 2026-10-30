@@ -1,6 +1,8 @@
 package bench
 
 import (
+	"github.com/alphatechini/multi-plex/internal/daemon"
+
 	"context"
 	"flag"
 	"fmt"
@@ -50,14 +52,15 @@ func runStartup(o *startupOpts) (*Result, error) {
 	res.addTiming("'mpx version' process (runtime + package init + exit)", version, "", 0, nil)
 
 	noop, err := timeRuns(o.n, func() error {
-		cmd := exec.Command(exe, "hook", "pre-tool")
+		argv := append(daemon.HookCommand(exe), "pre-tool")
+		cmd := exec.Command(argv[0], argv[1:]...)
 		cmd.Env = cleanEnv(os.Environ()) // no MPX_SESSION_ID: exits at once
 		return cmd.Run()
 	})
 	if err != nil {
 		return nil, fmt.Errorf("mpx hook: %w", err)
 	}
-	res.addTiming("'mpx hook' that exits at once (the floor for hook latency)", noop, "", 0, nil)
+	res.addTiming("hook process that exits at once (the floor for hook latency)", noop, "", 0, nil)
 
 	if o.tui {
 		if err := startupTUI(res, exe, o); err != nil {

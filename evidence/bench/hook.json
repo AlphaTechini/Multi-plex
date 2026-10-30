@@ -1,0 +1,45 @@
+{
+  "name": "hook",
+  "at": "2026-10-30T13:59:43.562793301Z",
+  "machine": {
+    "os": "linux",
+    "arch": "amd64",
+    "cpus": 4,
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "go_version": "go1.26.10",
+    "term": "/linux"
+  },
+  "metrics": [
+    {
+      "name": "round trip, one connection (daemon handling + socket)",
+      "stats": {
+        "n": 500,
+        "min_ms": 0.073947,
+        "mean_ms": 0.24252063000000001,
+        "p50_ms": 0.222692,
+        "p95_ms": 0.373777,
+        "p99_ms": 0.608842,
+        "max_ms": 1.091994
+      },
+      "budget": "\u003c 10ms p50",
+      "pass": true
+    },
+    {
+      "name": "full hook process (mpx-hook, or mpx hook) (spawn + connect + round trip + exit)",
+      "stats": {
+        "n": 100,
+        "min_ms": 4.875233,
+        "mean_ms": 6.8019415400000005,
+        "p50_ms": 6.736603,
+        "p95_ms": 8.680393,
+        "p99_ms": 9.586974,
+        "max_ms": 9.931105
+      },
+      "budget": "\u003c 10ms p50",
+      "pass": true
+    }
+  ],
+  "notes": [
+    "daemon: in-process daemon on a temp socket; tool: read; session worktree: /tmp/mpxbd3485744708/data/worktrees/ws_37680995e855dc86/bench-hook"
+  ]
+}

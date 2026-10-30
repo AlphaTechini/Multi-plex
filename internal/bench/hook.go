@@ -1,6 +1,8 @@
 package bench
 
 import (
+	"github.com/alphatechini/multi-plex/internal/daemon"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -95,7 +97,7 @@ func runHook(o *hookOpts) (*Result, error) {
 				ps = append(ps, d)
 			}
 		}
-		res.addTiming("full 'mpx hook pre-tool' process (spawn + connect + round trip + exit)", ps, budget, limit, func(s Stats) float64 { return s.P50 })
+		res.addTiming("full hook process (mpx-hook, or mpx hook) (spawn + connect + round trip + exit)", ps, budget, limit, func(s Stats) float64 { return s.P50 })
 	}
 	return res, nil
 }
@@ -103,7 +105,8 @@ func runHook(o *hookOpts) (*Result, error) {
 // runHookProcess runs `exe hook pre-tool` once, as Claude Code would, and
 // returns how long it took.
 func runHookProcess(exe string, env *hookEnv, payload []byte) (time.Duration, error) {
-	cmd := exec.Command(exe, "hook", "pre-tool")
+	argv := append(daemon.HookCommand(exe), "pre-tool")
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Stdin = bytes.NewReader(payload)
 	var out, errb bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errb

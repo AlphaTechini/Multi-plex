@@ -3,6 +3,8 @@ package claudecode
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/alphatechini/multi-plex/internal/agent"
 )
 
 // Hook timeouts in seconds. PreToolUse waits for a human-present approval
@@ -74,13 +76,14 @@ type hookHandler struct {
 
 // buildSettings returns the contents of settings.json for a session. The
 // matcher "*" matches every tool, including Bash and PowerShell (Windows).
-func buildSettings(mpxPath string) ([]byte, error) {
+func buildSettings(spec agent.LaunchSpec) ([]byte, error) {
 	s := settingsFile{Hooks: make(map[string][]hookGroup, len(hookSpecs))}
 	for _, h := range hookSpecs {
+		argv := spec.HookArgv(h.mpxEvent)
 		handler := hookHandler{
 			Type:    "command",
-			Command: mpxPath,
-			Args:    []string{"hook", h.mpxEvent},
+			Command: argv[0],
+			Args:    argv[1:],
 			Timeout: otherHookTimeout,
 		}
 		if h.gate {

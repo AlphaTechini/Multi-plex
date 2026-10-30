@@ -1,0 +1,46 @@
+{
+  "name": "render",
+  "at": "2026-10-30T13:59:49.061946834Z",
+  "machine": {
+    "os": "linux",
+    "arch": "amd64",
+    "cpus": 4,
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "go_version": "go1.26.10",
+    "term": "/linux"
+  },
+  "metrics": [
+    {
+      "name": "total time",
+      "value": 4507.448044,
+      "unit": "ms"
+    },
+    {
+      "name": "throughput",
+      "value": 2.2185595627621884,
+      "unit": "MiB/s"
+    },
+    {
+      "name": "frames",
+      "value": 161
+    },
+    {
+      "name": "frame cost p50",
+      "value": 0.128025,
+      "unit": "ms"
+    },
+    {
+      "name": "frame cost p99",
+      "value": 0.448448,
+      "unit": "ms"
+    },
+    {
+      "name": "frame cost max",
+      "value": 1.452429,
+      "unit": "ms"
+    }
+  ],
+  "notes": [
+    "stream: generated colored log, 10 MiB, 10240 KiB, 120x40; frame budget is one 16 ms window"
+  ]
+}

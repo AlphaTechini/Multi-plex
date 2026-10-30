@@ -30,6 +30,7 @@ func (d *Daemon) hPaneOpen(ctx context.Context, _ *conn, p protocol.PaneOpenPara
 		WorktreePath:  info.WorktreePath,
 		ConfigDir:     d.sessionConfigDir(info.ID),
 		MpxPath:       d.mpxPath,
+		HookCommand:   d.hookCmd,
 		Env:           d.sessionEnv(info.ID, base),
 	})
 	if err != nil {
