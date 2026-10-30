@@ -6,3 +6,6 @@ node_modules/
 /dist/
 *.exe
 .DS_Store
+*.test
+*.out
+/evidence/bench/*.tmp
