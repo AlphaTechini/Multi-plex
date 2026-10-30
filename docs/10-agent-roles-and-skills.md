@@ -29,7 +29,7 @@ Call report_progress with your findings and note_to_user for anything surprising
 | Role | Purpose |
 |---|---|
 | `orchestrator` | Breaks work down and starts other sessions through `session_spawn`, then waits on and combines their results |
-| `planner` | Writes and updates specs ([09](09-specs.md)). Does not change code |
+| `planner` | Writes and updates specs ([09](09-specs.md)). Does not change code. It keeps file-writing tools because spec files are files; its prompt limits writes to `.multiplex/specs/`, and the worktree keeps every change reversible |
 | `implementer` | Default coding role |
 | `researcher` | Read-only investigation |
 | `reviewer` | Reviews another session's diff against the spec's acceptance criteria |
