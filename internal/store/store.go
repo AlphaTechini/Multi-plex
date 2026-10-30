@@ -15,6 +15,11 @@ var ErrNotFound = errors.New("store: not found")
 
 // Store persists everything that is not in the repository.
 // See docs/01-architecture.md "Storage".
+//
+// Conventions shared by every implementation (checked by storetest):
+// a limit <= 0 means no limit; deleting a missing record is not an error,
+// but DismissNote on a missing note returns ErrNotFound; ListApprovals
+// matches one session exactly; times are returned in UTC.
 type Store interface {
 	// Workspaces.
 	PutWorkspace(ctx context.Context, w core.Workspace) error
