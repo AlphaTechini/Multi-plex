@@ -52,7 +52,7 @@ Remote side effects (`git push --force`, `aws s3 rm`, `kubectl delete`, `terrafo
 - **Credential stores are on a deny-read list** for agent file tools: `~/.aws`, `~/.config/gcloud`, `~/.ssh`, `~/.kube`, `~/.docker/config.json`, browser profile folders, password manager data. Enforced by the hook layer, and by the OS layer where available.
 - **Git pushes go through a broker.** Each session's worktree gets a per-worktree `pushurl` that does not work directly, set in the worktree's config file inside the main repository's `.git` folder (outside the worktree, so the agent cannot edit it under Layer 2). Pushing happens through `mpx push`, which asks for approval and then pushes with the user's own credentials. Verify in CC-14.
 - **Approved credential use is scoped**: approving one `terraform apply` injects credentials for that one command, not for the rest of the session.
-- The agent's git configuration is launched with credential helpers disabled, and any `git push` or `git config` change to remotes or credential settings is gated by Layer 4.
+- The agent's git configuration is launched with credential helpers disabled, and any `git push` or `git config` change to remotes or credential settings is gated by Layer 4. Layer 4 gates every `git push`, not only force pushes: a push publishes commits, which no local checkpoint can undo, so pushes go through `mpx push`.
 
 ### Limits of Layers 2 and 3 without OS isolation
 

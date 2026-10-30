@@ -1,0 +1,1180 @@
+{
+ "version": 1,
+ "rules": [
+  {
+   "id": "dynamic-command-word",
+   "description": "The command name comes from a variable or command substitution, so it cannot be checked",
+   "class": "dangerous",
+   "match": {
+    "regex": "^(?:\\$\\{?[A-Za-z_][A-Za-z0-9_]*\\}?|\\$\\([^)]*\\)|`[^`]*`)(?:\\s|$)"
+   }
+  },
+  {
+   "id": "git-push-force",
+   "description": "Force push rewrites remote history and cannot be undone locally",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "push",
+     "**",
+     "--force|--force-with-lease|--force-with-lease=*|--force-if-includes|-[f]|+*"
+    ]
+   },
+   "kind": "push"
+  },
+  {
+   "id": "git-push-delete",
+   "description": "Deleting a remote branch cannot be undone locally",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "push",
+     "**",
+     "--delete|-[d]|:*"
+    ]
+   },
+   "kind": "push"
+  },
+  {
+   "id": "git-push-protected-branch",
+   "description": "Pushing to a protected shared branch (main, master)",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "push",
+     "**",
+     "$branch"
+    ]
+   },
+   "kind": "push"
+  },
+  {
+   "id": "git-push-mirror-all",
+   "description": "Pushing all refs or mirroring can overwrite or prune remote branches",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "push",
+     "**",
+     "--mirror|--all|--prune"
+    ]
+   },
+   "kind": "push"
+  },
+  {
+   "id": "git-push-url",
+   "description": "Pushing to an explicit URL bypasses the push broker",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "push",
+     "**",
+     "*://*|*@*:*"
+    ]
+   },
+   "kind": "push"
+  },
+  {
+   "id": "git-push-wildcard-refspec",
+   "description": "A wildcard refspec can push or overwrite many remote branches including shared ones",
+   "class": "dangerous",
+   "kind": "push",
+   "match": {
+    "regex": "^git\\s+push\\b.*\\*"
+   }
+  },
+  {
+   "id": "git-push-on-protected-branch",
+   "description": "Pushing while a protected branch is checked out",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "push"
+    ]
+   },
+   "on_protected_current_branch": true,
+   "kind": "push"
+  },
+  {
+   "id": "git-reset-hard-remote",
+   "description": "Hard reset to a remote ref discards local commits and changes",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "git",
+      "reset",
+      "**",
+      "--hard",
+      "**",
+      "origin/*|upstream/*|refs/remotes/*|@{u}|@{upstream}|FETCH_HEAD"
+     ],
+     [
+      "git",
+      "reset",
+      "**",
+      "origin/*|upstream/*|refs/remotes/*|@{u}|@{upstream}|FETCH_HEAD",
+      "**",
+      "--hard"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "git-reset-hard-protected-branch",
+   "description": "Hard reset on a protected shared branch",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "reset",
+     "**",
+     "--hard"
+    ]
+   },
+   "on_protected_current_branch": true
+  },
+  {
+   "id": "git-clean-outside-worktree",
+   "description": "git clean outside the worktree deletes files that no checkpoint covers",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "clean",
+     "**",
+     "-[f]|--force"
+    ]
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "git-branch-delete-protected",
+   "description": "Deleting a protected branch",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "git",
+      "branch",
+      "**",
+      "-[D]",
+      "**",
+      "$branch"
+     ],
+     [
+      "git",
+      "branch",
+      "**",
+      "--delete",
+      "**",
+      "--force",
+      "**",
+      "$branch"
+     ],
+     [
+      "git",
+      "branch",
+      "**",
+      "--force",
+      "**",
+      "--delete",
+      "**",
+      "$branch"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "git-config-remote-credentials",
+   "description": "Changing remotes, credential helpers or command hooks in git config",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "git",
+      "config",
+      "**",
+      "(?i)remote.*.url|remote.*.pushurl|credential|credential.*|core.sshcommand|core.hookspath|core.askpass|core.fsmonitor|url.*|include.path|includeif.*|http.*proxy",
+      "*"
+     ],
+     [
+      "git",
+      "config",
+      "**",
+      "--unset|--unset-all|--replace-all|--remove-section|--rename-section|--add",
+      "**",
+      "(?i)remote.*.url|remote.*.pushurl|credential|credential.*|core.sshcommand|core.hookspath|core.askpass|core.fsmonitor|url.*|include.path|includeif.*|http.*proxy"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "git-dash-c-config",
+   "description": "git -c can inject credential helpers, remotes or commands for one invocation",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)^git\\s+(?:\\S+\\s+)*?-c\\s*(?:core\\.(?:sshcommand|hookspath|askpass|fsmonitor)|credential|remote\\.[^=\\s]*\\.(?:push)?url|url\\.|http\\.[^=\\s]*proxy)"
+   }
+  },
+  {
+   "id": "git-remote-modify",
+   "description": "Adding, changing or removing a remote",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "remote",
+     "add|set-url|remove|rm|rename|set-branches"
+    ]
+   }
+  },
+  {
+   "id": "git-credential",
+   "description": "Reading or writing git credentials",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "git",
+      "credential|credential-store|credential-cache|credential-manager|credential-manager-core"
+     ],
+     [
+      "git-credential-manager|git-credential-manager-core|git-credential-store|git-credential-cache"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "git-reflog-expire",
+   "description": "Expiring the reflog destroys the recovery points checkpoints rely on",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "reflog",
+     "expire|delete"
+    ]
+   }
+  },
+  {
+   "id": "git-gc-prune",
+   "description": "Pruning unreachable objects destroys checkpoints and recovery points",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "git",
+      "gc",
+      "**",
+      "--prune*"
+     ],
+     [
+      "git",
+      "prune"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "git-update-ref-delete",
+   "description": "Deleting refs",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "update-ref",
+     "**",
+     "-d|--delete"
+    ]
+   }
+  },
+  {
+   "id": "git-history-rewrite",
+   "description": "Rewriting history with filter-branch or filter-repo",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "filter-branch|filter-repo"
+    ]
+   }
+  },
+  {
+   "id": "git-checkpoint-refs",
+   "description": "Touching Multiplex checkpoint refs",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "git",
+     "update-ref|branch|tag|push|symbolic-ref|reset|checkout|fetch|worktree|replace",
+     "**",
+     "*refs/multiplex*"
+    ]
+   }
+  },
+  {
+   "id": "delete-outside-worktree",
+   "description": "Deleting files outside the worktree cannot be rolled back by a checkpoint",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "rm|unlink|rmdir|shred|del|erase|rd|ri|remove-item|rimraf",
+     "**"
+    ]
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "find-delete-outside-worktree",
+   "description": "find -delete outside the worktree cannot be rolled back",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "find",
+     "**",
+     "-delete"
+    ]
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "dotnet-delete-outside-worktree",
+   "description": "Deleting files through the .NET file API outside the worktree",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)\\[(?:system\\.)?io\\.(?:directory|file)\\]::delete\\(\\s*['\\\"](?P<path>[^'\\\"]+)['\\\"]",
+    "scope": "full"
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "script-delete-outside-worktree",
+   "description": "A one-liner script deletes a literal path outside the worktree",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?is)(?:\\bshutil\\.rmtree|\\bos\\.(?:remove|unlink|rmdir|removedirs)|\\brimraf(?:\\.sync)?|\\.(?:rmSync|rmdirSync|unlinkSync|rmtree)|\\bfs\\.(?:rm|rmdir|unlink)|\\bfs\\.promises\\.(?:rm|rmdir|unlink)|\\bFile\\.delete|\\bFileUtils\\.(?:rm|rm_rf|rm_r|remove_dir|remove_entry))\\s*\\(\\s*[rRbBuU]?['\\\"](?P<path>[^'\\\"]+)['\\\"]"
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "script-path-delete-outside-worktree",
+   "description": "A one-liner script deletes a literal Path outside the worktree",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?is)\\bPath\\(\\s*['\\\"](?P<path>[^'\\\"]+)['\\\"]\\s*\\)\\.(?:unlink|rmdir)\\s*\\("
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "chmod-chown-recursive-outside-worktree",
+   "description": "Recursive permission or ownership change outside the worktree",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "chmod|chown|chgrp",
+     "**",
+     "-[R]|--recursive"
+    ]
+   },
+   "unless_inside_worktree": true
+  },
+  {
+   "id": "redirect-to-block-device",
+   "description": "Writing to a raw disk device",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)>\\s*/dev/(?:sd|nvme|hd|vd|xvd|disk|mmcblk|rdisk)"
+   }
+  },
+  {
+   "id": "terraform-destroy-apply",
+   "description": "Terraform changes or destroys real infrastructure",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "terraform|tofu|terragrunt|terramate",
+      "**",
+      "destroy|apply|import|taint|untaint|force-unlock"
+     ],
+     [
+      "terraform|tofu",
+      "**",
+      "state",
+      "rm|mv|push|replace-provider"
+     ],
+     [
+      "terraform|tofu",
+      "**",
+      "workspace",
+      "delete"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "pulumi-change",
+   "description": "Pulumi changes or destroys real infrastructure",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "pulumi",
+      "**",
+      "destroy|up|refresh|cancel|import"
+     ],
+     [
+      "pulumi",
+      "**",
+      "stack",
+      "rm"
+     ],
+     [
+      "pulumi",
+      "**",
+      "state",
+      "delete|unprotect|rename"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "iac-deploy",
+   "description": "Deploying or removing a cloud stack",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "cdk|serverless|sls|sam|sst|amplify|pulumi-cdk",
+     "**",
+     "destroy|deploy|remove|delete|bootstrap"
+    ]
+   }
+  },
+  {
+   "id": "kubectl-change",
+   "description": "kubectl changes or deletes cluster resources",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "kubectl|oc|kubectl-ns",
+     "**",
+     "delete|apply|drain|scale|replace|patch|cordon|taint|rollout"
+    ]
+   }
+  },
+  {
+   "id": "helm-remove",
+   "description": "Helm removes or rolls back a release",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "helm",
+     "**",
+     "uninstall|delete|rollback"
+    ]
+   }
+  },
+  {
+   "id": "argocd-delete",
+   "description": "Argo CD deletes an application",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "argocd",
+     "**",
+     "delete"
+    ]
+   }
+  },
+  {
+   "id": "aws-delete",
+   "description": "AWS CLI delete, terminate or remove verbs act on real resources",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "aws",
+      "**",
+      "delete-*|terminate-*|remove-*|deregister-*|destroy-*|purge-*|delete"
+     ],
+     [
+      "aws",
+      "**",
+      "s3",
+      "rm|rb|mv"
+     ],
+     [
+      "aws",
+      "**",
+      "s3",
+      "sync",
+      "**",
+      "--delete"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "gcloud-delete",
+   "description": "Google Cloud delete verbs act on real resources",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "gcloud",
+      "**",
+      "delete|destroy|remove-*|rm"
+     ],
+     [
+      "gsutil",
+      "**",
+      "rm|rb|mv"
+     ],
+     [
+      "bq",
+      "**",
+      "rm|truncate"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "azure-delete",
+   "description": "Azure CLI delete verbs act on real resources",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "az",
+     "**",
+     "delete|purge|remove"
+    ]
+   }
+  },
+  {
+   "id": "paas-delete",
+   "description": "Deleting or destroying a hosted app or resource",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "doctl|linode-cli|hcloud|scw",
+      "**",
+      "delete|destroy"
+     ],
+     [
+      "heroku",
+      "**",
+      "destroy|apps:destroy|pg:reset|pg:push|maintenance:on"
+     ],
+     [
+      "fly|flyctl",
+      "**",
+      "destroy"
+     ],
+     [
+      "vercel",
+      "**",
+      "rm|remove"
+     ],
+     [
+      "wrangler",
+      "**",
+      "delete"
+     ],
+     [
+      "netlify",
+      "**",
+      "sites:delete"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "gh-delete",
+   "description": "GitHub CLI delete verbs act on the real GitHub account",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "gh",
+      "**",
+      "delete"
+     ],
+     [
+      "gh",
+      "pr",
+      "merge"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "gh-api-delete",
+   "description": "GitHub API DELETE or write call",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)^gh\\s+api\\b.*(?:-X|--method)[ =]?DELETE\\b"
+   }
+  },
+  {
+   "id": "docker-destroy",
+   "description": "Docker commands that delete images, volumes or data",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "docker|podman",
+      "**",
+      "system",
+      "prune"
+     ],
+     [
+      "docker|podman",
+      "**",
+      "volume",
+      "rm|prune"
+     ],
+     [
+      "docker|podman",
+      "**",
+      "rmi",
+      "**",
+      "-[f]|--force"
+     ],
+     [
+      "docker|podman",
+      "**",
+      "image",
+      "prune",
+      "**",
+      "-[a]|--all"
+     ],
+     [
+      "docker|podman",
+      "**",
+      "compose",
+      "down",
+      "**",
+      "-[v]|--volumes"
+     ],
+     [
+      "docker-compose",
+      "**",
+      "down",
+      "**",
+      "-[v]|--volumes"
+     ],
+     [
+      "docker|podman",
+      "**",
+      "container",
+      "prune"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "docker-push",
+   "description": "Publishing a container image",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "docker|podman|helm|oras",
+     "**",
+     "push"
+    ]
+   }
+  },
+  {
+   "id": "package-publish",
+   "description": "Publishing a package to a public registry cannot be undone",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "npm|pnpm|yarn|bun|npx",
+      "**",
+      "publish|unpublish|deprecate"
+     ],
+     [
+      "npm|pnpm|yarn",
+      "**",
+      "dist-tag",
+      "add|rm"
+     ],
+     [
+      "cargo",
+      "**",
+      "publish|yank"
+     ],
+     [
+      "twine",
+      "**",
+      "upload"
+     ],
+     [
+      "gem",
+      "push|yank"
+     ],
+     [
+      "nuget|dotnet",
+      "**",
+      "push"
+     ],
+     [
+      "poetry|uv|hatch|flutter|dart",
+      "**",
+      "publish"
+     ],
+     [
+      "mvn|mvnw",
+      "**",
+      "deploy"
+     ],
+     [
+      "gradle|gradlew",
+      "**",
+      "publish*"
+     ],
+     [
+      "vsce|ovsx",
+      "**",
+      "publish"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "database-destructive-statement",
+   "description": "DROP, TRUNCATE or DELETE without WHERE against a database cannot be undone",
+   "class": "dangerous",
+   "match": {
+    "all": [
+     "(?i)\\b(?:psql|pgcli|usql|mysql|mycli|mariadb|sqlite3|sqlcmd|duckdb|clickhouse-client|cockroach|redis-cli|mongosh|mongo|cqlsh|isql|sqlplus)\\b",
+     "(?i)(?:\\bdrop\\s+(?:table|database|schema|index|view|user|role|collection|keyspace|materialized)\\b|\\btruncate\\s+(?:table\\s+)?[\\w\\\"`\\[.]|\\bdelete\\s+from\\s+[^\\s;'\\\"|)]+\\s*(?:;|$|['\\\"|)])|\\bflush(?:all|db)\\b|\\bdropdatabase\\b|\\.drop\\(\\)|\\bdeletemany\\(\\s*\\{\\s*\\}\\s*\\))"
+    ],
+    "scope": "full"
+   }
+  },
+  {
+   "id": "database-drop-tools",
+   "description": "Tools that drop or reset databases",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "dropdb|dropuser"
+     ],
+     [
+      "mysqladmin",
+      "**",
+      "drop"
+     ],
+     [
+      "prisma",
+      "**",
+      "migrate",
+      "reset"
+     ],
+     [
+      "prisma",
+      "**",
+      "db",
+      "push",
+      "**",
+      "--force-reset"
+     ],
+     [
+      "rails|rake",
+      "**",
+      "db:drop|db:reset|db:purge|db:schema:load"
+     ],
+     [
+      "manage.py|django-admin",
+      "**",
+      "flush"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "disk-destructive",
+   "description": "Writing to or formatting a disk",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "dd",
+      "**",
+      "of=/dev/*|of=\\\\.\\*"
+     ],
+     [
+      "mkfs*|mke2fs|wipefs|fdisk|sfdisk|parted|gdisk|sgdisk|diskpart|format|format-volume|clear-disk|initialize-disk|remove-partition|remove-volume"
+     ],
+     [
+      "cipher",
+      "**",
+      "/w*"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "power-control",
+   "description": "Shutting down or rebooting the machine",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "shutdown|reboot|halt|poweroff|restart-computer|stop-computer"
+     ],
+     [
+      "init|telinit",
+      "0|6"
+     ],
+     [
+      "systemctl",
+      "**",
+      "poweroff|reboot|halt|kexec|hibernate|suspend"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "system-config-destroy",
+   "description": "Deleting system configuration or backups",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "reg",
+      "delete|import|restore"
+     ],
+     [
+      "vssadmin|wbadmin",
+      "**",
+      "delete"
+     ],
+     [
+      "bcdedit"
+     ],
+     [
+      "crontab",
+      "**",
+      "-[r]"
+     ],
+     [
+      "sc",
+      "delete"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "fork-bomb",
+   "description": "Fork bomb",
+   "class": "dangerous",
+   "match": {
+    "regex": ":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}",
+    "scope": "full"
+   }
+  },
+  {
+   "id": "pipe-to-shell",
+   "description": "Piping a download into a shell runs unreviewed code",
+   "class": "dangerous",
+   "match": {
+    "all": [
+     "(?i)\\b(?:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\\b",
+     "(?i)(?:(?:^|[^|])\\|\\s*(?:sudo\\s+(?:-\\S+\\s+)*)?(?:env\\s+\\S+=\\S+\\s+)?(?:sh|bash|zsh|dash|ksh|fish|pwsh|powershell|iex|invoke-expression)\\b|(?:^|[^|])\\|\\s*(?:sudo\\s+)?(?:python3?|node|ruby|perl)\\s*(?:-\\s*)?(?:$|[|;&)])|<\\(\\s*(?:curl|wget))"
+    ],
+    "scope": "full"
+   }
+  },
+  {
+   "id": "iex-download",
+   "description": "Invoke-Expression on downloaded text runs unreviewed code",
+   "class": "dangerous",
+   "match": {
+    "all": [
+     "(?i)\\b(?:iex|invoke-expression)\\b",
+     "(?i)\\b(?:iwr|irm|invoke-webrequest|invoke-restmethod|downloadstring|downloadfile|webclient)\\b"
+    ],
+    "scope": "full"
+   }
+  },
+  {
+   "id": "shell-from-download",
+   "description": "Running a shell on a downloaded script",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)\\b(?:sh|bash|zsh|dash)\\s+-c\\s+[\\\"']?\\$\\(\\s*(?:curl|wget)",
+    "scope": "full"
+   }
+  },
+  {
+   "id": "write-protected-settings",
+   "description": "Writing to Claude Code settings or the safety rules file could disable the safety layer",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)(?:>>?|>\\||\\btee\\b|\\bcp\\b|\\bmv\\b|\\binstall\\b|\\bln\\b|\\bdd\\b|\\bsed\\s+-\\S*i|\\btruncate\\b|\\bset-content\\b|\\badd-content\\b|\\bout-file\\b|\\bcopy-item\\b|\\bmove-item\\b|\\bnew-item\\b|\\bremove-item\\b|\\brm\\b|\\bdel\\b|\\bri\\b|\\bsc\\b|\\bac\\b|\\bsponge\\b|\\brsync\\b|\\bpatch\\b|\\bunlink\\b|\\berase\\b|\\bcopy\\b|\\bmove\\b|\\bren\\b|\\brename\\b)[^|;&\\n]*(?:\\.claude[/\\\\]settings(?:\\.local)?\\.json|(?:^|[/\\\\\\s\\\"'])\\.claude\\.json\\b|\\.multiplex[/\\\\]safety-rules\\.json|[/\\\\]multiplex[/\\\\]safety-rules\\.json|managed-settings\\.json)",
+    "scope": "full"
+   }
+  },
+  {
+   "id": "script-write-protected-settings",
+   "description": "A script writes to Claude Code settings or the safety rules file",
+   "class": "dangerous",
+   "match": {
+    "all": [
+     "(?i)\\b(?:python3?|py|node|ruby|perl|php|deno|bun)\\b",
+     "(?i)(?:\\.claude[/\\\\]settings(?:\\.local)?\\.json|(?:^|[/\\\\\\s\\\"'])\\.claude\\.json\\b|\\.multiplex[/\\\\]safety-rules\\.json|[/\\\\]multiplex[/\\\\]safety-rules\\.json|managed-settings\\.json)",
+     "(?i)(?:open\\(|write_text|writefile|write\\(|json\\.dump|fs\\.|file_put_contents|\\.write)"
+    ],
+    "scope": "full"
+   }
+  },
+  {
+   "id": "claude-config-change",
+   "description": "Changing Claude Code configuration, MCP servers or plugins",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     [
+      "claude",
+      "mcp",
+      "add|add-json|add-from-claude-desktop|remove"
+     ],
+     [
+      "claude",
+      "config",
+      "set|add|remove"
+     ],
+     [
+      "claude",
+      "plugin|plugins",
+      "install|uninstall|add|remove|marketplace"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "claude-skip-permissions",
+   "description": "Starting an agent with permission checks disabled",
+   "class": "dangerous",
+   "match": {
+    "argv": [
+     "claude|codex|opencode|gemini|aider",
+     "**",
+     "--dangerously-skip-permissions|--dangerously-bypass-approvals-and-sandbox|--yolo|--allow-dangerously-skip-permissions"
+    ]
+   }
+  },
+  {
+   "id": "safe-readonly-commands",
+   "description": "Read-only inspection command",
+   "class": "safe",
+   "match": {
+    "argv": [
+     "ls|dir|cat|type|get-content|gc|get-childitem|gci|pwd|get-location|echo|write-output|write-host|head|tail|wc|grep|egrep|fgrep|rg|fd|fdfind|tree|which|where|get-command|whoami|date|uname|file|stat|du|df|sort|uniq|cut|diff|cmp|less|more|basename|dirname|realpath|readlink|hostname|select-string|measure-object|get-item|get-itemproperty|test-path|resolve-path|split-path|join-path|ps|get-process|jq|yq|true|false|test|[|[[|cd|set-location|sl|pushd|popd|sleep|start-sleep|printf|nl|column|tac|rev|expand|fold|seq|id|groups|env|printenv|get-date|format-table|format-list|select-object|where-object|sort-object|out-string|convertto-json|convertfrom-json|get-filehash|sha256sum|md5sum|shasum|hexdump|od|strings|ver|vol|tasklist|wslpath|nproc|free|uptime|lscpu|arch"
+    ]
+   }
+  },
+  {
+   "id": "safe-find",
+   "description": "find without -delete, -exec or output files",
+   "class": "safe",
+   "match": {
+    "argv": [
+     "find"
+    ]
+   },
+   "exclude": [
+    "find",
+    "**",
+    "-delete|-exec|-execdir|-ok|-okdir|-fprint|-fprintf|-fls|-fprint0"
+   ]
+  },
+  {
+   "id": "safe-git-readonly",
+   "description": "Read-only git command",
+   "class": "safe",
+   "match": {
+    "argv": [
+     [
+      "git",
+      "status|log|diff|show|rev-parse|blame|ls-files|ls-tree|fetch|describe|shortlog|grep|reflog|cat-file|count-objects|merge-base|name-rev|rev-list|show-ref|for-each-ref|diff-tree|diff-files|diff-index|var|version|help|whatchanged|stash"
+     ],
+     [
+      "git",
+      "branch"
+     ],
+     [
+      "git",
+      "remote"
+     ],
+     [
+      "git",
+      "config",
+      "**",
+      "--get|--get-all|--get-regexp|--list|-l"
+     ],
+     [
+      "git",
+      "tag"
+     ],
+     [
+      "git",
+      "worktree",
+      "list"
+     ]
+    ]
+   },
+   "exclude": [
+    "git",
+    "branch|tag|remote",
+    "**",
+    "-[dDmMcCfu]|--delete|--move|--copy|--force|--set-upstream-to*|--unset-upstream|--edit-description|add|set-url|remove|rm|rename|prune|update"
+   ]
+  },
+  {
+   "id": "safe-go",
+   "description": "Go toolchain build, test and inspection",
+   "class": "safe",
+   "match": {
+    "argv": [
+     [
+      "go",
+      "build|test|vet|fmt|run|list|mod|version|env|doc|generate|work"
+     ],
+     [
+      "gofmt|goimports|golangci-lint|staticcheck|gopls|govulncheck"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "safe-js",
+   "description": "JavaScript package manager build, test and install",
+   "class": "safe",
+   "match": {
+    "argv": [
+     [
+      "pnpm|npm|yarn|bun",
+      "install|i|ci|add|test|t|run|lint|build|dev|start|exec|why|ls|list|outdated|audit|version|--version|-v|-version"
+     ],
+     [
+      "tsc|eslint|prettier|vitest|jest|playwright|biome|turbo|vite|next|webpack|esbuild|rollup"
+     ],
+     [
+      "node|deno",
+      "--version|-v|-V"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "safe-rust",
+   "description": "Cargo build, test and inspection",
+   "class": "safe",
+   "match": {
+    "argv": [
+     [
+      "cargo",
+      "build|b|test|t|check|c|clippy|fmt|run|r|doc|bench|tree|metadata|fetch|version|--version|clean|update|add|remove"
+     ],
+     [
+      "rustc|rustfmt|rustup",
+      "--version|-V|show|--help"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "safe-python",
+   "description": "Python tests and version checks",
+   "class": "safe",
+   "match": {
+    "argv": [
+     [
+      "python|python3|py",
+      "-m",
+      "pytest|unittest|pip|venv|ruff|mypy|black|flake8|pylint|compileall"
+     ],
+     [
+      "pytest|ruff|mypy|black|flake8|pylint|tox|nox"
+     ],
+     [
+      "python|python3|py",
+      "--version|-V|-VV"
+     ],
+     [
+      "pip|pip3|uv",
+      "install|list|show|freeze|sync|lock|run|--version|check"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "safe-dotnet-java",
+   "description": "dotnet, Maven and Gradle build and test",
+   "class": "safe",
+   "match": {
+    "argv": [
+     [
+      "dotnet",
+      "build|test|restore|format|--version|--info|clean|run|watch"
+     ],
+     [
+      "mvn|mvnw",
+      "compile|test|verify|package|clean|-v|--version|dependency:tree"
+     ],
+     [
+      "gradle|gradlew",
+      "build|test|check|assemble|clean|tasks|dependencies"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "safe-mpx",
+   "description": "The Multiplex CLI (mpx push asks for approval itself)",
+   "class": "safe",
+   "match": {
+    "argv": [
+     "mpx"
+    ]
+   }
+  },
+  {
+   "id": "http-delete-request",
+   "description": "An HTTP DELETE request to a remote service cannot be undone",
+   "class": "dangerous",
+   "match": {
+    "regex": "(?i)^(?:curl|wget|http|https|xh|iwr|irm|invoke-restmethod|invoke-webrequest)\\b.*(?:-X\\s*|--request[ =]\\s*|-Method\\s+|--method[ =]\\s*)DELETE\\b"
+   },
+   "exclude": [
+    "*",
+    "**",
+    "*localhost*|*127.0.0.1*|*://[[]::1]*|*0.0.0.0*"
+   ]
+  },
+  {
+   "id": "git-push-any",
+   "description": "Pushing publishes commits to a remote, which a local checkpoint cannot undo; land work through mpx push (docs/04 Layer 3)",
+   "class": "dangerous",
+   "match": {
+    "regex": "^git(\\s+(-C|-c|--git-dir|--work-tree)\\s+\\S+|\\s+--?[a-z-]+(=\\S+)?)*\\s+push(\\s|$)",
+    "scope": "segment"
+   },
+   "kind": "push"
+  }
+ ]
+}
