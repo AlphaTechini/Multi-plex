@@ -106,18 +106,32 @@ func (c *Client) Call(ctx context.Context, method string, params, out any) error
 		if !ok {
 			return ErrClosed
 		}
-		if f.Error != nil {
-			return f.Error
-		}
-		if out == nil || len(f.Data) == 0 {
-			return nil
-		}
-		return json.Unmarshal(f.Data, out)
+		return decodeResponse(f, out)
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-c.done:
+		// A response that arrived just before the connection closed is still
+		// valid: select picks among ready cases at random.
+		select {
+		case f, ok := <-ch:
+			if ok {
+				return decodeResponse(f, out)
+			}
+		default:
+		}
 		return ErrClosed
 	}
+}
+
+// decodeResponse turns a response frame into an error or the decoded result.
+func decodeResponse(f *protocol.Frame, out any) error {
+	if f.Error != nil {
+		return f.Error
+	}
+	if out == nil || len(f.Data) == 0 {
+		return nil
+	}
+	return json.Unmarshal(f.Data, out)
 }
 
 // Subscribe asks the daemon to push events for topics (all when empty).
