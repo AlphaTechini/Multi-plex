@@ -1,0 +1,45 @@
+                                                                                          
+  Cache auth tokens per user and update the callers                                       
+  ⠹ working  ·  implementer  ·  ⎇ mpx/auth-refactor  ·  turn 6 · 14m                      
+                                                                                          
+  SUMMARY                                                                  report 6 of 6  
+  Done        ✓ Added token cache to Session.Refresh                                      
+              ✓ Moved the expiry check into tokenValid()                                  
+  Decided     Cache TTL is 5 minutes, matching the token lifetime                         
+  Open        ? Should the cache be per-user or global?                                   
+  Next        Update callers in api/ and worker/                                          
+  Files       src/auth/session.go  src/auth/cache.go  +5 more                             
+                                                                                          
+  INSIGHTS                                                                         2 new  
+  ▌  1 DECISION NEEDED  Cache scope: per-user or global?                             2m   
+  ▌    A per-user cache costs about 4 MB at 10k users. A global cache is smaller but      
+  ▌    would share tokens across tenants if a key is ever wrong. I am holding the…        
+  ▌    src/auth/cache.go:L12-L30                                                          
+  ▌    a ask   s steer   i interrupt + steer   d dismiss                                  
+                                                                                          
+  ▌  2 WARNING  Changing Session.Refresh signature                                   6m   
+  ▌    Refresh now takes a cache argument. Callers in api/ and worker/ need updating;     
+  ▌    api-pagination also edits src/api/client.go.                                       
+  ▌    src/auth/session.go:L38-L52                                                        
+  ▌    a ask   s steer   i interrupt + steer   d dismiss                                  
+                                                                                          
+  ▌  3 INFO  Assumed tokens expire after 5 minutes                                  11m   
+  ▌    Matched the TTL to the identity provider's default token lifetime. Override with   
+  ▌    AUTH_CACHE_TTL.                                                                    
+  ▌    src/auth/cache.go:L8                                                               
+  ▌    a ask   s steer   i interrupt + steer   d dismiss                                  
+                                                                                          
+  CONFLICTS                                                                               
+  ● Will conflict with api-pagination in src/api/client.go   merge-tree, checked 1m ago   
+                                                                                          
+  SPEC                                                                                    
+  token-refresh   ━━━━━━━━━━────────────── 3/7  tasks   9 criteria                        
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
+                                                                                          
