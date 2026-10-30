@@ -51,6 +51,8 @@ Version 1 is a **wrapper**: it hosts existing agent CLIs (Claude Code first) in 
 | 13 | [Capability checks](docs/13-capability-checks.md) | Things we must prove work before building on them |
 | 14 | [Roadmap](docs/14-roadmap.md) | Phases, scope and exit criteria |
 | 15 | [Open questions](docs/15-open-questions.md) | Decisions not made yet |
+| 16 | [Visual design](docs/16-visual-design.md) | Design system: colour tokens, glyphs, screen mockups, motion, responsive rules |
+| 17 | [Code structure](docs/17-code-structure.md) | Package layout and the neutral-layer rule for replaceable parts |
 
 ## For coding agents
 
