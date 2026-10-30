@@ -20,8 +20,11 @@
 //
 // Widths are measured in cells, not bytes or runes: escape sequences take no
 // cells and wide characters (CJK, most emoji) take two. Always use Width,
-// Truncate, TruncateLeft, PadRight, PadLeft, Fit and FitBlock from this
-// package (or the charmbracelet/x/ansi functions they wrap), never len().
+// Truncate, TruncateLeft, PadRight, PadLeft, Fit, FitBlock and Wrap from this
+// package, never len(). They give exactly the charmbracelet/x/ansi answers
+// but take a fast path for the text the UI draws (ASCII, escape sequences,
+// box drawing, symbols, CJK) and only run the grapheme segmenter for text
+// that needs it, which keeps a full 180×48 frame under a millisecond.
 //
 // Colours come from the theme. Primitives take semantic inputs (State,
 // Severity, Tone, DiffKind) and look colours up in the theme; screens should

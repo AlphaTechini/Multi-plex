@@ -11,10 +11,10 @@ type command struct {
 }
 
 var commands = []command{
-	{"Sessions", "New session", "ctrl+space n"},
+	{"Sessions", "New session", "ctrl+\\ n"},
 	{"Sessions", "New session from spec task", ""},
 	{"Specs", "New spec from an idea", ""},
-	{"Insights", "Jump to newest card", "ctrl+space 1"},
+	{"Insights", "Jump to newest card", "ctrl+\\ 1"},
 	{"Recent", "Network: allow host for this session", ""},
 }
 

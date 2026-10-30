@@ -1,7 +1,5 @@
 package kit
 
-import "github.com/charmbracelet/x/ansi"
-
 // Truncate shortens a single line to at most w cells, ending it with tail
 // (for example "…") when it had to cut. It never splits an escape sequence or
 // a wide character, and the result is never wider than w, even when tail is
@@ -10,11 +8,11 @@ func Truncate(s string, w int, tail string) string {
 	if w <= 0 {
 		return ""
 	}
-	if ansi.StringWidth(s) <= w {
+	if stringWidth(s) <= w {
 		return s
 	}
-	if ansi.StringWidth(tail) > w {
+	if stringWidth(tail) > w {
 		tail = ""
 	}
-	return ansi.Truncate(s, w, tail)
+	return truncate(s, w, tail)
 }

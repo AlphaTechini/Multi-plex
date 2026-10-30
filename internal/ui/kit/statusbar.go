@@ -3,8 +3,6 @@ package kit
 import (
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
@@ -48,11 +46,11 @@ func StatusBar(t *theme.Theme, o StatusBarOptions) string {
 	bg := t.Surface.Sunken
 	left := o.Left
 	right := joinSegments(t, o.Right)
-	fits := func(l, r string) bool { return ansi.StringWidth(l)+ansi.StringWidth(r)+3 <= w }
+	fits := func(l, r string) bool { return stringWidth(l)+stringWidth(r)+3 <= w }
 
 	l := " " + joinSegments(t, left)
 	if right != "" && len(o.Hints) > 0 {
-		room := w - ansi.StringWidth(l) - ansi.StringWidth(right) - 7
+		room := w - stringWidth(l) - stringWidth(right) - 7
 		if room > 0 {
 			if h := strings.TrimRight(KeyHints(t, o.Hints, room), " "); h != "" {
 				return Backfill(spread(l, right+"   "+h+" ", w), bg)
@@ -60,7 +58,7 @@ func StatusBar(t *theme.Theme, o StatusBarOptions) string {
 		}
 	}
 	if right == "" && len(o.Hints) > 0 {
-		room := w - ansi.StringWidth(l) - 4
+		room := w - stringWidth(l) - 4
 		if h := strings.TrimRight(KeyHints(t, o.Hints, max(room, 0)), " "); h != "" && room > 0 {
 			return Backfill(spread(l, h+" ", w), bg)
 		}

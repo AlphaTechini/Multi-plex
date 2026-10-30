@@ -1,8 +1,6 @@
 package kit
 
 import (
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
@@ -16,7 +14,7 @@ func ButtonRow(t *theme.Theme, buttons []ButtonOptions, width int) string {
 		if out != "" {
 			next = "  " + next
 		}
-		if width > 0 && ansi.StringWidth(out)+ansi.StringWidth(next) > width {
+		if width > 0 && stringWidth(out)+stringWidth(next) > width {
 			break
 		}
 		out += next

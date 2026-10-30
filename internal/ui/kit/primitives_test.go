@@ -254,3 +254,44 @@ func TestButtons(t *testing.T) {
 		t.Errorf("Keycap = %q", got)
 	}
 }
+
+func TestChoiceKeepsSelectionVisible(t *testing.T) {
+	th := themes()["truecolor"]
+	opts := []string{"orchestrator", "planner", "implementer", "researcher", "reviewer", "resolver"}
+	for w := 16; w <= 80; w++ {
+		for sel := range opts {
+			out := Choice(th, ChoiceOptions{Width: w, Options: opts, Selected: sel, Focused: true})
+			assertWidth(t, "Choice", out, w)
+			if !strings.Contains(ansi.Strip(out), " "+opts[sel]+" ") {
+				t.Fatalf("Choice(width %d, sel %d) hides the selection: %q", w, sel, ansi.Strip(out))
+			}
+		}
+	}
+}
+
+func TestWrap(t *testing.T) {
+	cmd := `Remove-Item -Recurse -Force ..\..\multi-plex\testdata\golden-files-with-a-long-name`
+	for w := 1; w < 40; w++ {
+		lines := Wrap(cmd, w)
+		joined := ""
+		for _, l := range lines {
+			if Width(l) > w {
+				t.Fatalf("Wrap(%d) line %q too wide", w, l)
+			}
+			joined += l
+		}
+		if strings.ReplaceAll(joined, " ", "") != strings.ReplaceAll(cmd, " ", "") {
+			t.Fatalf("Wrap(%d) lost text: %q", w, joined)
+		}
+	}
+}
+
+func TestWrapCarriesStyles(t *testing.T) {
+	lines := Wrap("\x1b[1mbold words here\x1b[m plain", 6)
+	if len(lines) < 3 || !strings.HasPrefix(lines[1], "\x1b[1m") {
+		t.Fatalf("second line lost the style: %q", lines)
+	}
+	if last := lines[len(lines)-1]; strings.HasPrefix(last, "\x1b[1m") {
+		t.Fatalf("style leaked past its reset: %q", lines)
+	}
+}

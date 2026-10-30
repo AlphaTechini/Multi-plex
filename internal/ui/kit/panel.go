@@ -4,8 +4,6 @@ import (
 	"image/color"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
@@ -73,30 +71,50 @@ func Panel(t *theme.Theme, o PanelOptions) string {
 	}
 	edge := fg(border)
 	inner := w - 2
-
-	lines := make([]string, 0, h)
-	lines = append(lines, Backfill(edge.paint(g.TopLeft)+panelTop(t, o, inner, edge)+edge.paint(g.TopRight), bg))
-
 	cw, ch := PanelInner(o)
 	pad := spaces((inner - cw) / 2)
-	body := Lines(FitBlock(o.Content, cw, ch))
+	vert := edge.paint(g.Vertical)
+
+	var b strings.Builder
+	b.Grow((h + 1) * (w + 2*len(vert) + 64))
+	b.WriteString(edge.paint(g.TopLeft))
+	b.WriteString(panelTop(t, o, inner, edge))
+	b.WriteString(edge.paint(g.TopRight))
+
+	// Every line is backfilled once, at the end: Backfill of the joined block
+	// is byte-for-byte the join of per-line Backfills.
+	var src []string
+	if cw > 0 {
+		src = Lines(o.Content)
+	}
 	for i := range ch {
-		content := ""
+		b.WriteByte('\n')
+		b.WriteString(vert)
 		if cw > 0 {
-			content = body[i]
+			line := ""
+			if i < len(src) {
+				line = src[i]
+			}
+			b.WriteString(pad)
+			b.WriteString(Fit(line, cw))
+			b.WriteString(pad)
+		} else {
+			b.WriteString(spaces(inner))
 		}
-		mid := Fit(pad+content+pad, inner)
-		lines = append(lines, Backfill(edge.paint(g.Vertical)+mid+edge.paint(g.Vertical), bg))
+		b.WriteString(vert)
 	}
 
 	bottom := edge.paint(repeat(g.Horizontal, inner))
 	if o.Footer != "" && inner > 4 {
 		f := Truncate(o.Footer, inner-4, "…")
-		fill := inner - 3 - ansi.StringWidth(f)
+		fill := inner - 3 - stringWidth(f)
 		bottom = edge.paint(g.Horizontal) + " " + f + " " + edge.paint(repeat(g.Horizontal, fill))
 	}
-	lines = append(lines, Backfill(edge.paint(g.BottomLeft)+bottom+edge.paint(g.BottomRight), bg))
-	return strings.Join(lines, "\n")
+	b.WriteByte('\n')
+	b.WriteString(edge.paint(g.BottomLeft))
+	b.WriteString(bottom)
+	b.WriteString(edge.paint(g.BottomRight))
+	return Backfill(b.String(), bg)
 }
 
 // panelTop renders the top edge between the corners: exactly inner cells.
@@ -121,8 +139,8 @@ func panelTop(t *theme.Theme, o PanelOptions, inner int, edge ink) string {
 		meta = fg(t.Text.Muted).paint(o.Meta)
 	}
 	// Layout: "─ " title " " fill " " meta " ─"
-	tw := ansi.StringWidth(title)
-	mw := ansi.StringWidth(meta)
+	tw := stringWidth(title)
+	mw := stringWidth(meta)
 	if meta != "" && inner-6-mw < min(tw, 8) {
 		meta, mw = "", 0
 	}
@@ -131,7 +149,7 @@ func panelTop(t *theme.Theme, o PanelOptions, inner int, edge ink) string {
 		room -= mw + 3
 	}
 	title = Truncate(title, room, "…")
-	tw = ansi.StringWidth(title)
+	tw = stringWidth(title)
 	fill := inner - 3 - tw
 	right := ""
 	if meta != "" {

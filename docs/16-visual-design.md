@@ -164,7 +164,7 @@ Every glyph is exactly one cell wide in both sets, so switching sets never moves
 | Frame | `╭ ╮ ╰ ╯ ─ │` (rounded, light) | `+ + + + - \|` |
 | Keys | `⌃` ctrl, `⇧` shift, `⌥` alt, `↵` enter, `␣` space, `⌫` backspace, `esc`, `tab` | `C-`, `S-`, `M-`, `enter`, `space`, `bksp`, `esc`, `tab` |
 
-Key hints are written as specs (`"ctrl+space p"`) and formatted by `kit.FormatKeys`, so one place decides how keys look. Avoid emoji and symbols with emoji presentation (`⚠`, `✔`, `❌`): terminals disagree about their width.
+Key hints are written as specs (`"ctrl+\\ p"`, shown `⌃\ p`) and formatted by `kit.FormatKeys`, so one place decides how keys look. Avoid emoji and symbols with emoji presentation (`⚠`, `✔`, `❌`): terminals disagree about their width.
 
 ## Spacing and structure
 
@@ -261,8 +261,8 @@ The selected session's latest report, its insight cards and its warnings. Sideba
 │                          ││                                                                                          ││ > Try "update the callers in api/"                       │
 │                          ││                                                                                          ││ ──────────────────────────────────────────────────────── │
 │                          ││                                                                                          ││   ? for shortcuts                                        │
-╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃␣ a zoom ──────────────────────────────╯
- multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃␣ p palette   ⌃␣ n new   ? keys
+╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃\ z zoom ──────────────────────────────╯
+ multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 **110 × 32**
@@ -365,8 +365,8 @@ One file at a time ([07](07-diff-viewer.md)). In Diff mode the sidebar is its ic
 │    ││                                │                               ▌    ⌃s send now   u undo                       ││ > Try "update the callers in api/"                       │
 │    ││  [ prev   ] next   v reviewed  │                               ▌                                               ││ ──────────────────────────────────────────────────────── │
 │    ││                                │                                                                               ││   ? for shortcuts                                        │
-╰────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃␣ a zoom ──────────────────────────────╯
- multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃␣ p palette   ⌃␣ n new   ? keys
+╰────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃\ z zoom ──────────────────────────────╯
+ multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 **110 × 32**
@@ -410,7 +410,7 @@ One file at a time ([07](07-diff-viewer.md)). In Diff mode the sidebar is its ic
 
 A gated action ([04](04-safety.md), Layer 5) from a session that is not the one on screen. The screen behind is dimmed toward `Surface.Sunken` (scrim 0.7) and the dialog's frame is amber: the only amber frame the app ever draws.
 
-Contents, in reading order: what is being asked ("cannot be undone"), which session (amber dot), a one-line plain-language reason, the **exact command** on a sunken code block, the **working directory** (session worktree, full path truncated from the left), **why it was gated** (each layer and rule, with the rule's file and line), the **affected files** (count, size, first files, `l list all`), then how approval works (Windows Hello here; Touch ID, polkit or password elsewhere) and whether a session-wide rule is active. Buttons: **Approve once** (primary, `↵`, starts the biometric check), **Deny** (`esc`), **Deny with message** (`m`, opens a one-line input in place of the buttons). Enter never approves by itself: it starts the OS check, which an agent cannot pass.
+Contents, in reading order: what is being asked ("cannot be undone"), which session (amber dot), a one-line plain-language reason, the **exact command** on a sunken code block (wrapped onto more lines when long, never truncated), the **working directory** (session worktree, full path truncated from the left), **why it was gated** (each layer and rule, with the rule's file and line), the **affected files** (count, size, first files, `l list all`), then how approval works (Windows Hello here; Touch ID, polkit or password elsewhere) and whether a session-wide rule is active. Buttons: **Approve once** (primary, `↵`, starts the biometric check), **Deny** (`esc`), **Deny with message** (`m`, opens a one-line input in place of the buttons). Enter never approves by itself: it starts the OS check, which an agent cannot pass.
 
 **180 × 48**
 
@@ -461,8 +461,8 @@ Contents, in reading order: what is being asked ("cannot be undone"), which sess
 │                          ││                                                                                          ││ > Try "update the callers in api/"                       │
 │                          ││                                                                                          ││ ──────────────────────────────────────────────────────── │
 │                          ││                                                                                          ││   ? for shortcuts                                        │
-╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃␣ a zoom ──────────────────────────────╯
- multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃␣ p palette   ⌃␣ n new   ? keys
+╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃\ z zoom ──────────────────────────────╯
+ multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 **110 × 32**
@@ -504,7 +504,7 @@ Contents, in reading order: what is being asked ("cannot be undone"), which sess
 
 ### Command palette
 
-`⌃␣ p`. A flush overlay (no inner padding) near the top of the screen over the dimmed view: the query with a block cursor, `esc close`, a rule, then results grouped by section with the matched characters in accent bold, key bindings right-aligned and muted. The selected row is `Surface.Selected` with the accent bar. Footer: navigation hints. `/` at the start of the query lists slash commands.
+`⌃\ p`. A flush overlay (no inner padding) near the top of the screen over the dimmed view: the query with a block cursor, `esc close`, a rule, then results grouped by section with the matched characters in accent bold, key bindings right-aligned and muted. The selected row is `Surface.Selected` with the accent bar. Footer: navigation hints. `/` at the start of the query lists slash commands.
 
 **180 × 48**
 
@@ -522,14 +522,14 @@ Contents, in reading order: what is being asked ("cannot be undone"), which sess
 │    ││    M  session_test.go   +88 −4 │   43   43 │────────────────────────────────────────────────────────────────────────────│                                                  │
 │    ││  ✓ R  token.go           +3 −3 │▌  44      │                                                                            │e(src/auth/cache.go)                              │
 │    ││                                │▌       44 │ SESSIONS                                                                   │eated with 41 lines                               │
-│    ││  src/worker/                   │▌  45   45 │▌ New session                                                         ⌃␣ n  │                                                  │
+│    ││  src/worker/                   │▌  45   45 │▌ New session                                                         ⌃\ n  │                                                  │
 │    ││    M  refresh.go         +5 −5 │▌  46      │  New session from spec task                                                │ cache is in place and the auth tests pass.       │
 │    ││                                │▌       46 │                                                                            │e I update the callers in api/ and worker/:       │
 │    ││  docs/                         │           │ SPECS                                                                      │d the cache be per-user or global? I raised it as │
 │    ││    M  auth.md           +12 −1 │           │  New spec from an idea                                                     │1.                                                │
 │    ││                                │           │                                                                            │                                                  │
 │    ││                                │           │ INSIGHTS                                                                   │ing callers… (esc to interrupt)                   │
-│    ││                                │           │  Jump to newest card                                                 ⌃␣ 1  │                                                  │
+│    ││                                │           │  Jump to newest card                                                 ⌃\ 1  │                                                  │
 │    ││                                │   47   47 │                                                                            │                                                  │
 │    ││                                │        48 │ RECENT                                                                     │                                                  │
 │    ││                                │   48   49 │  Network: allow host for this session                                      │                                                  │
@@ -555,8 +555,8 @@ Contents, in reading order: what is being asked ("cannot be undone"), which sess
 │    ││                                │                               ▌    ⌃s send now   u undo                       ││ > Try "update the callers in api/"                       │
 │    ││  [ prev   ] next   v reviewed  │                               ▌                                               ││ ──────────────────────────────────────────────────────── │
 │    ││                                │                                                                               ││   ? for shortcuts                                        │
-╰────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃␣ a zoom ──────────────────────────────╯
- multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃␣ p palette   ⌃␣ n new   ? keys
+╰────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃\ z zoom ──────────────────────────────╯
+ multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 **110 × 32**
@@ -573,14 +573,14 @@ Contents, in reading order: what is being asked ("cannot be undone"), which sess
 │  ✓ ││        4│────────────────────────────────────────────────────────────────────────────│            ││ │
 │    ││   42   4│                                                                            │            ││ │
 │    ││   43   4│ SESSIONS                                                                   │            ││ │
-│    ││▌  44    │▌ New session                                                         ⌃␣ n  │            ││ │
+│    ││▌  44    │▌ New session                                                         ⌃\ n  │            ││ │
 │    ││▌       4│  New session from spec task                                                │            ││ │
 │    ││▌  45   4│                                                                            │            ││ │
 │    ││▌  46    │ SPECS                                                                      │            ││ │
 │    ││▌       4│  New spec from an idea                                                     │            ││ │
 │    ││         │                                                                            │    L44–L46 ││ │
 │    ││         │ INSIGHTS                                                                   │path runs   ││ │
-│    ││         │  Jump to newest card                                                 ⌃␣ 1  │            ││ │
+│    ││         │  Jump to newest card                                                 ⌃\ 1  │            ││ │
 │    ││         │                                                                            │            ││ │
 │    ││   47   4│ RECENT                                                                     │            ││ │
 │    ││        4│  Network: allow host for this session                                      │            ││ │
@@ -626,7 +626,7 @@ First run in a workspace. The layout is already the real one, so the user learns
 │                          ││                                                                                          ││                                                          │
 │                          ││                                     n   new session                                      ││                                                          │
 │                          ││                                                                                          ││                                                          │
-│                          ││                                  ⌃␣ p   command palette                                  ││                                                          │
+│                          ││                                  ⌃\ p   command palette                                  ││                                                          │
 │                          ││                                                                                          ││                                                          │
 │                          ││                                     ?   all keys                                         ││                                                          │
 │                          ││                                                                                          ││                                                          │
@@ -650,7 +650,7 @@ First run in a workspace. The layout is already the real one, so the user learns
 │                          ││                                                                                          ││                                                          │
 │                          ││                                                                                          ││                                                          │
 ╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
- multi-plex   ⎇ main   no sessions                                                                                                                 ⌃␣ p palette   ⌃␣ n new   ? keys
+ multi-plex   ⎇ main   no sessions                                                                                                                 ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 **110 × 32**
@@ -673,7 +673,7 @@ First run in a workspace. The layout is already the real one, so the user learns
 │    ││                                                                                                   ││ │
 │    ││                                          n   new session                                          ││ │
 │    ││                                                                                                   ││ │
-│    ││                                       ⌃␣ p   command palette                                      ││ │
+│    ││                                       ⌃\ p   command palette                                      ││ │
 │    ││                                                                                                   ││ │
 │    ││                                          ?   all keys                                             ││ │
 │    ││                                                                                                   ││ │
@@ -687,12 +687,12 @@ First run in a workspace. The layout is already the real one, so the user learns
 │    ││                                                                                                   ││ │
 │    ││                                                                                                   ││ │
 ╰────╯╰───────────────────────────────────────────────────────────────────────────────────────────────────╯╰─╯
- multi-plex   ⎇ main   no sessions                                           ⌃␣ p palette   ⌃␣ n new   ? keys
+ multi-plex   ⎇ main   no sessions                                           ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 ### New session dialog
 
-`⌃␣ n` or `n`. Task (multi-line, focused: strong label, blue bar, cursor; `⌃t` picks a spec task instead), role as a segmented choice with a one-line description of the selected role, base branch, and a read-only preview of the branch and worktree that will be created plus what setup will run. Inputs are inset wells on `Surface.Sunken`. **Start session** is `⌃↵` because `↵` inserts a new line in the task.
+`⌃\ n` or `n`. Task (multi-line, focused: strong label, blue bar, cursor; `⌃t` picks a spec task instead), role as a segmented choice with a one-line description of the selected role, base branch, and a read-only preview of the branch and worktree that will be created plus what setup will run. Inputs are inset wells on `Surface.Sunken`. **Start session** is `⌃↵` because `↵` inserts a new line in the task.
 
 **180 × 48**
 
@@ -743,8 +743,8 @@ First run in a workspace. The layout is already the real one, so the user learns
 │                          ││                                                                                          ││ > Try "update the callers in api/"                       │
 │                          ││                                                                                          ││ ──────────────────────────────────────────────────────── │
 │                          ││                                                                                          ││   ? for shortcuts                                        │
-╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃␣ a zoom ──────────────────────────────╯
- multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃␣ p palette   ⌃␣ n new   ? keys
+╰──────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────╯╰─ esc interrupt   ⌃\ z zoom ──────────────────────────────╯
+ multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                                                   ● 1 approval · api-pagination    ⌃\ p palette   ⌃\ n new   ? keys
 ```
 
 **110 × 32**
@@ -793,9 +793,9 @@ All of these are `kit` primitives; the mockups above are built only from them.
 One row on `Surface.Sunken`, full width. Left, in priority order: workspace (strong, bold), `› session`, state badge, `⎇ branch` (muted). Right: attention pills (amber, dark text, only when something waits for you), then key hints. Segments are separated by three spaces, not glyphs. As the terminal narrows it drops, in order: key hints, then left segments from the end (branch first, then state), then right segments; the workspace and the approvals pill are the last to go.
 
 ```
-   multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                              ⌃␣ p palette   ⌃␣ n new   ? keys
+   multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor                              ⌃\ p palette   ⌃\ n new   ? keys
 
-   multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor             ● 2 approvals    ⌃␣ p palette   ⌃␣ n new   ? keys
+   multi-plex   › auth-refactor   ⠹ working   ⎇ mpx/auth-refactor             ● 2 approvals    ⌃\ p palette   ⌃\ n new   ? keys
 
    multi-plex   › auth-refactor   ⠹ working                        ● 2 approvals
 ```
@@ -814,7 +814,7 @@ Title is the session's state dot and name; meta is the agent CLI; the bottom edg
   ╰─ esc interrupt ──────────────────────────────────────────╯  ╰─ esc interrupt ──────────────────────────────────────────╯
 ```
 
-Collapsed (terminal narrower than 138 columns, see Responsive rules), the panel is a 3-column rail with the state dot at the top; `⌃␣ a` opens it as a 60-column drawer over the right of the main view, focused.
+Collapsed (terminal narrower than 138 columns, see Responsive rules), the panel is a 3-column rail with the state dot at the top; `⌃\ a` opens it as a 60-column drawer over the right of the main view, focused.
 
 ### State badges, tabs, buttons, keys
 
@@ -822,7 +822,7 @@ Collapsed (terminal narrower than 138 columns, see Responsive rules), the panel 
   ◌ starting     ⠹ working     ● blocked     ✓ done     ○ idle     ✕ error
 
    Overview 3   Diff 7   Code   Specs   Term        Approve once  ↵    Deny  esc    Cancel  esc
-  ⌃␣ p palette   ⇧tab back   ↵ open   ↑ ↓ move       n   ⌃␣ p       ━━━━━━━━──────────── 3/7
+  ⌃\ p palette   ⇧tab back   ↵ open   ↑ ↓ move       n   ⌃\ p       ━━━━━━━━──────────── 3/7
 ```
 
 - **State dot / badge:** dot in the state colour; the label is `Text.Secondary` for quiet states and the state colour for loud ones (blocked, error).
@@ -838,7 +838,7 @@ Bottom-right of the main view, one row above the status bar, 46 columns, on `Sur
 ```
   ▌                                         ▌                                         ▌
   ▌ ✓  3 comments sent                      ▌ ●  api-pagination needs approval        ▌ ✕  docs-sweep exited (code 1)
-  ▌    to auth-refactor · src/auth/sessi…   ▌    ⌃␣ ! go there                        ▌    agent CLI crashed · restart with r
+  ▌    to auth-refactor · src/auth/sessi…   ▌    ⌃\ ! go there                        ▌    agent CLI crashed · restart with r
   ▌                                         ▌                                         ▌
 ```
 
@@ -848,7 +848,7 @@ A severity bar (`▌`) down the left edge, then: number (muted, right-aligned in
 
 ### Diff rows
 
-`DiffLine` renders: marker column (accent `▌` for selected lines, thin accent `▎` for new lines with reduced motion), old and new line numbers (4 cells each, muted), the sign in its colour, then the code on the line background with changed words on the word background. Hunk headers span the row on `Diff.HunkBg`. Folded regions are a band on `Surface.Sunken` with "··· N unchanged lines ···" at the code column and, when selected, `↵ expand`. Code never wraps; long lines end in `…` and horizontal scroll is a key away.
+`DiffLine` renders: marker column (accent `▌` for selected lines, thin accent `▎` for new lines with reduced motion), old and new line numbers (4 cells each, muted), the sign in its colour, then the code on the line background with changed words on the word background. Hunk headers span the row on `Diff.HunkBg`. Folded regions are a band on `Surface.Sunken` with "··· N unchanged lines ···" at the code column and, when selected, `↵ expand`. Code never wraps; long lines end in `…` and horizontal scroll is a key away. (The opposite holds in the approval prompt: the command is wrapped, never cut, because it is what you are approving.)
 
 The file banner (`Banner`) is the sticky first row of the diff: the directory in secondary, the file name strong bold, `· 3 of 7`, then status, counts and reviewed state on the right. The end-of-file marker (`FileEnd`) is a centred rule with "end of file · next path ]" and never scrolls into the next file.
 
@@ -899,10 +899,20 @@ Minimum supported size: **80 × 24**.
 - **Background:** always painted, so light-background terminals still show the dark theme correctly. A light theme is a separate theme file, not an automatic inversion.
 - **Box drawing:** frames use light rounded corners. Terminals draw them edge to edge; there is no gap between rows.
 
+## Rendering cost
+
+The look has to fit the frame budget in [03](03-performance.md) (16 ms per frame, and a spinner tick should cost well under 2 ms). The kit is built for that:
+
+- Widths are measured with a fast path that gives exactly `ansi.StringWidth`'s answer for printable ASCII, CSI/OSC sequences and runes that always stand alone (box drawing, symbols, Latin, Greek, Cyrillic, CJK). Anything else (combining marks, joiners, emoji sequences, complex scripts) goes through the full grapheme segmenter. A test checks every BMP rune and random mixes against `ansi.StringWidth`; truncation is checked the same way against `ansi.Truncate`.
+- `Backfill` and `Dim` rewrite a whole block in one pass, and SGR sequences for theme colours are built once and reused.
+- Measured on the CI-class Linux machine (`go test -bench` in `internal/ui/kit`, `internal/ui/app`, `internal/ui/views/diffview`): a 92 × 47 panel ≈ 0.1 ms, one diff row ≈ 10 µs, a full 180 × 48 frame ≈ 0.7 ms, an agent-output frame ≈ 0.2 ms, a cold 10k-line diff frame ≈ 1.2 ms.
+
+Screens keep their own caches on top (unchanged regions are not re-rendered), so most frames redraw one region.
+
 ## Open decisions
 
-1. **Prefix key.** Mockups use `⌃␣` (ctrl+space) as a placeholder; the real default waits for CC-09 ([06](06-ui-layout.md)). Changing it changes only the hint specs.
-2. **Mac key glyphs on Windows and Linux.** `⌃ ⇧ ⌥` are compact and consistent, but Windows users may read `ctrl` faster. Option: a `keys = "words"` glyph setting (`ctrl+space p`). Needs the author's call.
+1. **Prefix key.** Decided: `Ctrl+\` (shown `⌃\`), free in Claude Code, opencode, Codex, Windows Terminal, tmux and macOS ([15](15-open-questions.md) Q2); `Ctrl+Space` is the configured alternative. Terminal delivery is still to be checked by hand in each target terminal. Hints are key specs, so a user keymap changes every hint at once.
+2. **Mac key glyphs on Windows and Linux.** `⌃ ⇧ ⌥` are compact and consistent, but Windows users may read `ctrl` faster. Option: a `keys = "words"` glyph setting (`ctrl+\ p`). Needs the author's call.
 3. **Diff mode collapsing the sidebar** at every width. It buys about 22 columns of code at 180 columns. Alternative: collapse only below 200 columns.
 4. **Agent panel as a drawer below 138 columns.** Keeps the 60-column minimum from [06](06-ui-layout.md) but hides the agent by default on small terminals. Alternative: swap main view and agent panel with one key (zoom) instead of a drawer.
 5. **Painted background vs the terminal's own.** Painting `#1E1E1E` everywhere gives a consistent look but ignores the user's terminal background and transparency. Option: a `background = "terminal"` setting that leaves `Surface.Base` unpainted.

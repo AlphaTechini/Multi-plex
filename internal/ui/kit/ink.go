@@ -3,6 +3,7 @@ package kit
 import (
 	"image/color"
 	"strings"
+	"sync"
 
 	"github.com/charmbracelet/x/ansi"
 )
@@ -16,8 +17,48 @@ type ink struct {
 	strike                  bool
 }
 
+// seqCache memoises ink sequences: building one costs several allocations
+// and the UI paints the same few dozen inks every frame.
+var (
+	seqMu    sync.RWMutex
+	seqCache = map[ink]string{}
+)
+
 // seq returns the SGR sequence that sets the ink, or "" for an empty ink.
 func (k ink) seq() string {
+	if !k.cacheable() {
+		return k.build()
+	}
+	seqMu.RLock()
+	s, ok := seqCache[k]
+	seqMu.RUnlock()
+	if ok {
+		return s
+	}
+	s = k.build()
+	seqMu.Lock()
+	if len(seqCache) > 4096 { // themes are small; this only guards against misuse
+		clear(seqCache)
+	}
+	seqCache[k] = s
+	seqMu.Unlock()
+	return s
+}
+
+// cacheable reports whether the ink's colours are of comparable types, so the
+// ink can be a map key.
+func (k ink) cacheable() bool { return comparableColor(k.fg) && comparableColor(k.bg) }
+
+func comparableColor(c color.Color) bool {
+	switch c.(type) {
+	case nil, color.RGBA, color.NRGBA, ansi.IndexedColor, ansi.BasicColor:
+		return true
+	}
+	return false
+}
+
+// build constructs the SGR sequence for the ink.
+func (k ink) build() string {
 	var s ansi.Style
 	if k.bold {
 		s = s.Bold()
@@ -68,10 +109,16 @@ func (k ink) paint(text string) string {
 // fg is shorthand for an ink with only a foreground.
 func fg(c color.Color) ink { return ink{fg: c} }
 
+// spaceRun backs spaces for the common short runs, without allocating.
+var spaceRun = strings.Repeat(" ", 512)
+
 // spaces returns n spaces (none for n <= 0).
 func spaces(n int) string {
 	if n <= 0 {
 		return ""
+	}
+	if n <= len(spaceRun) {
+		return spaceRun[:n]
 	}
 	b := make([]byte, n)
 	for i := range b {

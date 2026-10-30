@@ -7,5 +7,10 @@ func Fit(s string, w int) string {
 	if w <= 0 {
 		return ""
 	}
-	return PadRight(Truncate(s, w, "…"), w)
+	sw := stringWidth(s)
+	if sw <= w {
+		return s + spaces(w-sw)
+	}
+	t := truncate(s, w, "…")
+	return t + spaces(w-stringWidth(t))
 }

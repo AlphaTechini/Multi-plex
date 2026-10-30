@@ -131,6 +131,7 @@ func TestFormatKeys(t *testing.T) {
 	th := themes()["truecolor"]
 	cases := map[string]string{
 		"ctrl+space p": "⌃␣ p",
+		"ctrl+\\ p":    "⌃\\ p",
 		"shift+tab":    "⇧tab",
 		"enter":        "↵",
 		"up down":      "↑ ↓",

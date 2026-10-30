@@ -48,15 +48,15 @@ func (s scene) gallery() string {
 	head("Tabs · buttons · keys")
 	add(kit.Fit("  "+kit.TabBar(t, kit.TabBarOptions{Tabs: modeTabs, Active: 1})+"      "+
 		kit.ButtonRow(t, []kit.ButtonOptions{{Label: "Approve once", Keys: "enter", Variant: kit.ButtonPrimary}, {Label: "Deny", Keys: "esc"}, {Label: "Cancel", Keys: "esc", Variant: kit.ButtonGhost}}, 0), w))
-	add(kit.Fit("  "+kit.KeyHints(t, []kit.Hint{{Keys: "ctrl+space p", Label: "palette"}, {Keys: "shift+tab", Label: "back"}, {Keys: "enter", Label: "open"}, {Keys: "up down", Label: "move"}}, 0)+"      "+
-		kit.Keycap(t, "n")+" "+kit.Keycap(t, "ctrl+space p")+"      "+
+	add(kit.Fit("  "+kit.KeyHints(t, []kit.Hint{{Keys: "ctrl+\\ p", Label: "palette"}, {Keys: "shift+tab", Label: "back"}, {Keys: "enter", Label: "open"}, {Keys: "up down", Label: "move"}}, 0)+"      "+
+		kit.Keycap(t, "n")+" "+kit.Keycap(t, "ctrl+\\ p")+"      "+
 		kit.Progress(t, kit.ProgressOptions{Width: 24, Done: 3, Total: 7, Label: true}), w))
 
 	head("Toasts")
 	tw := min(46, (w-10)/3)
 	toasts := []string{
 		kit.Toast(t, kit.ToastOptions{Width: tw, Tone: kit.ToneSuccess, Title: "3 comments sent", Body: "to auth-refactor · src/auth/session.go"}),
-		kit.Toast(t, kit.ToastOptions{Width: tw, Tone: kit.ToneWarning, Title: "api-pagination needs approval", Hints: []kit.Hint{{Keys: "ctrl+space !", Label: "go there"}}}),
+		kit.Toast(t, kit.ToastOptions{Width: tw, Tone: kit.ToneWarning, Title: "api-pagination needs approval", Hints: []kit.Hint{{Keys: "ctrl+\\ !", Label: "go there"}}}),
 		kit.Toast(t, kit.ToastOptions{Width: tw, Tone: kit.ToneDanger, Title: "docs-sweep exited (code 1)", Body: "agent CLI crashed · restart with r"}),
 	}
 	add(pad(kit.JoinColumns(toasts[0], "  ", toasts[1], "  ", toasts[2])))
@@ -68,7 +68,7 @@ func (s scene) gallery() string {
 				{Text: t.Glyphs.ChevronRight + " auth-refactor"},
 				{Text: kit.StateBadge(t, kit.StateWorking, s.frame)},
 				{Text: t.Glyphs.Branch + " mpx/auth-refactor", Tone: kit.ToneMuted}},
-			Hints: []kit.Hint{{Keys: "ctrl+space p", Label: "palette"}, {Keys: "ctrl+space n", Label: "new"}, {Keys: "?", Label: "keys"}}}
+			Hints: []kit.Hint{{Keys: "ctrl+\\ p", Label: "palette"}, {Keys: "ctrl+\\ n", Label: "new"}, {Keys: "?", Label: "keys"}}}
 		if approvals {
 			o.Right = []kit.Segment{{Text: t.Glyphs.Blocked + " 2 approvals", Tone: kit.ToneWarning, Pill: true}}
 		}

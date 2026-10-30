@@ -4,8 +4,6 @@ import (
 	"image/color"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
@@ -58,11 +56,11 @@ func EmptyState(t *theme.Theme, o EmptyStateOptions) string {
 		cw := 0
 		for i, h := range o.Hints {
 			caps[i] = Keycap(t, h.Keys)
-			cw = max(cw, ansi.StringWidth(caps[i]))
+			cw = max(cw, stringWidth(caps[i]))
 		}
 		lw := 0
 		for _, h := range o.Hints {
-			lw = max(lw, ansi.StringWidth(h.Label))
+			lw = max(lw, stringWidth(h.Label))
 		}
 		for i, h := range o.Hints {
 			line := PadLeft(caps[i], cw) + "  " + PadRight(fg(t.Text.Secondary).paint(h.Label), lw)

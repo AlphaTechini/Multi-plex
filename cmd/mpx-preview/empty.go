@@ -12,7 +12,7 @@ func (s scene) empty() string {
 			Body:    "A session is one agent working on one task in its own worktree and branch. Start one and its summary, diff and terminal appear here.",
 			Hints: []kit.Hint{
 				{Keys: "n", Label: "new session"},
-				{Keys: "ctrl+space p", Label: "command palette"},
+				{Keys: "ctrl+\\ p", Label: "command palette"},
 				{Keys: "?", Label: "all keys"},
 			},
 		})

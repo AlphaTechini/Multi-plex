@@ -165,7 +165,7 @@ func (s scene) agentPanel(f frame, o screenOpts) string {
 	po.Title = ss.name
 	po.Icon = kit.StateDot(s.t, ss.state, s.frame)
 	po.Meta = "claude"
-	po.Footer = kit.KeyHints(s.t, []kit.Hint{{Keys: "esc", Label: "interrupt"}, {Keys: "ctrl+space a", Label: "zoom"}}, 0)
+	po.Footer = kit.KeyHints(s.t, []kit.Hint{{Keys: "esc", Label: "interrupt"}, {Keys: "ctrl+\\ z", Label: "zoom"}}, 0)
 	iw, ih := kit.PanelInner(po)
 	po.Content = s.agentTranscript(iw, ih)
 	return kit.Panel(s.t, po)
@@ -188,7 +188,7 @@ func (s scene) statusBar(o screenOpts) string {
 	}
 	return kit.StatusBar(t, kit.StatusBarOptions{
 		Width: s.w, Left: left, Right: right,
-		Hints: []kit.Hint{{Keys: "ctrl+space p", Label: "palette"}, {Keys: "ctrl+space n", Label: "new"}, {Keys: "?", Label: "keys"}},
+		Hints: []kit.Hint{{Keys: "ctrl+\\ p", Label: "palette"}, {Keys: "ctrl+\\ n", Label: "new"}, {Keys: "?", Label: "keys"}},
 	})
 }
 

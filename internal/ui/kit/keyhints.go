@@ -1,8 +1,6 @@
 package kit
 
 import (
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
@@ -18,7 +16,7 @@ func KeyHints(t *theme.Theme, hints []Hint, width int) string {
 		if out != "" {
 			next = gap + next
 		}
-		if width > 0 && ansi.StringWidth(out)+ansi.StringWidth(next) > width {
+		if width > 0 && stringWidth(out)+stringWidth(next) > width {
 			break
 		}
 		out += next

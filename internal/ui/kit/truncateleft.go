@@ -11,11 +11,11 @@ func TruncateLeft(s string, w int, head string) string {
 	if w <= 0 {
 		return ""
 	}
-	sw := ansi.StringWidth(s)
+	sw := stringWidth(s)
 	if sw <= w {
 		return s
 	}
-	hw := ansi.StringWidth(head)
+	hw := stringWidth(head)
 	if hw > w {
 		head, hw = "", 0
 	}
@@ -30,7 +30,7 @@ func cutLeft(s string, n, want int) string {
 		return ""
 	}
 	rest := ansi.TruncateLeft(s, n, "")
-	if ansi.StringWidth(rest) > want {
+	if stringWidth(rest) > want {
 		rest = " " + ansi.TruncateLeft(s, n+1, "")
 	}
 	return rest

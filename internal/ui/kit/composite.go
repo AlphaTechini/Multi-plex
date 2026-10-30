@@ -33,20 +33,20 @@ func Composite(bg, fg string, x, y int) string {
 
 // overlayLine puts top over line starting at column x.
 func overlayLine(line, top string, x int) string {
-	lw := ansi.StringWidth(line)
+	lw := stringWidth(line)
 	if x < 0 {
-		top = cutLeft(top, -x, ansi.StringWidth(top)+x)
+		top = cutLeft(top, -x, stringWidth(top)+x)
 		x = 0
 	}
 	if x >= lw {
 		return line
 	}
 	top = Truncate(top, lw-x, "")
-	tw := ansi.StringWidth(top)
+	tw := stringWidth(top)
 	if tw == 0 {
 		return line
 	}
-	left := PadRight(ansi.Truncate(line, x, ""), x)
+	left := PadRight(truncate(line, x, ""), x)
 	right := ""
 	if x+tw < lw {
 		right = cutLeft(line, x+tw, lw-x-tw)

@@ -1,7 +1,6 @@
 package kit
 
 import (
-	"fmt"
 	"image/color"
 	"strconv"
 	"strings"
@@ -27,13 +26,45 @@ func Dim(t *theme.Theme, s string, toward color.Color, amount float64) string {
 	defFg := d.blend(t.Text.Primary)
 	defBg := d.blend(t.Surface.Base)
 	head := "\x1b[" + truecolorParam(38, defFg) + ";" + truecolorParam(48, defBg) + "m"
-	lines := Lines(s)
-	for i, line := range lines {
-		lines[i] = head + rewriteSGR(line, func(p string) string {
-			return "\x1b[" + d.rewrite(p, defFg, defBg) + "m"
-		}) + ansi.ResetStyle
+	var b strings.Builder
+	b.Grow(len(s) + len(s)/4 + 64)
+	b.WriteString(head)
+	for i := 0; i < len(s); {
+		switch c := s[i]; {
+		case c == '\n':
+			b.WriteString(ansi.ResetStyle)
+			b.WriteByte('\n')
+			b.WriteString(head)
+			i++
+		case c == 0x1B && i+1 < len(s) && s[i+1] == '[':
+			j := i + 2
+			for j < len(s) && (s[j] < 0x40 || s[j] > 0x7E) && s[j] != '\n' {
+				j++
+			}
+			switch {
+			case j >= len(s) || s[j] == '\n':
+				b.WriteString(s[i:j]) // unterminated: copy as it is
+				i = j
+				continue
+			case s[j] == 'm':
+				b.WriteString("\x1b[")
+				b.WriteString(d.rewrite(s[i+2:j], defFg, defBg))
+				b.WriteByte('m')
+			default:
+				b.WriteString(s[i : j+1])
+			}
+			i = j + 1
+		default:
+			k := i + 1
+			for k < len(s) && s[k] != '\n' && s[k] != 0x1B {
+				k++
+			}
+			b.WriteString(s[i:k])
+			i = k
+		}
 	}
-	return strings.Join(lines, "\n")
+	b.WriteString(ansi.ResetStyle)
+	return b.String()
 }
 
 type dimmer struct {
@@ -126,5 +157,13 @@ func truecolorParam(intro int, c color.Color) string {
 		return strconv.Itoa(intro + 1)
 	}
 	r, g, b, _ := c.RGBA()
-	return fmt.Sprintf("%d;2;%d;%d;%d", intro, r>>8, g>>8, b>>8)
+	buf := make([]byte, 0, 20)
+	buf = strconv.AppendInt(buf, int64(intro), 10)
+	buf = append(buf, ";2;"...)
+	buf = strconv.AppendUint(buf, uint64(r>>8), 10)
+	buf = append(buf, ';')
+	buf = strconv.AppendUint(buf, uint64(g>>8), 10)
+	buf = append(buf, ';')
+	buf = strconv.AppendUint(buf, uint64(b>>8), 10)
+	return string(buf)
 }

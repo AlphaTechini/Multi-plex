@@ -21,7 +21,7 @@ func spread(left, right string, w int) string {
 	if w <= 0 {
 		return ""
 	}
-	rw := ansi.StringWidth(right)
+	rw := stringWidth(right)
 	if rw == 0 {
 		return Fit(left, w)
 	}

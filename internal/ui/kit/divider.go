@@ -1,8 +1,6 @@
 package kit
 
 import (
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
@@ -40,7 +38,7 @@ func Divider(t *theme.Theme, o DividerOptions) string {
 		tone = ToneMuted
 	}
 	label := " " + Truncate(o.Label, w-6, "…") + " "
-	lw := ansi.StringWidth(label)
+	lw := stringWidth(label)
 	var left int
 	switch o.Align {
 	case AlignCenter:
