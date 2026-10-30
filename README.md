@@ -2,7 +2,7 @@
 
 A fast, safety-first terminal workbench for running, watching and reviewing several AI coding agents at once, each in its own git worktree.
 
-> **Status:** planning. Nothing is built yet. The `docs/` folder is the source of truth for what we are building and why.
+> **Status:** first working build, tested on Linux only. Built: daemon and TUI with detach/reattach, sessions in worktrees running Claude Code, the diff viewer with review comments, the safety gate (classifier, path policy, credential scrubbing, checkpoints, approvals, audit log, push broker), insight cards and summaries over MCP, follow mode, specs, roles, orchestration tools and conflict prediction. Not built yet: the skills catalog, worktree setup recipes, Claude Code's own sandbox on macOS/Linux and the Windows write restriction (CC-11), Touch ID, and everything from Phase 6 on ([roadmap](docs/14-roadmap.md)). The checks that need the author's Windows machine (CC-01 ConPTY, CC-02 against real agent TUIs, CC-05 Windows Hello, CC-06 hook enforcement, CC-09 key delivery) are still open. `docs/` remains the source of truth.
 
 ## What it is
 
@@ -15,6 +15,23 @@ Multiplex is a terminal application (TUI) backed by a small background daemon. Y
 - **Start from specs** (requirements, design, tasks) in the style of Kiro, so agents work against written acceptance criteria.
 
 Version 1 is a **wrapper**: it hosts existing agent CLIs (Claude Code first) in real terminal panes and adds sessions, worktrees, review and safety around them. A native agent loop comes later (see [roadmap](docs/14-roadmap.md)).
+
+## Build and run
+
+Requires Go 1.26 and Git 2.38 or newer. [Claude Code](https://code.claude.com) on `PATH` for agent sessions.
+
+```sh
+go build -o bin/ ./cmd/mpx ./cmd/mpx-hook   # keep mpx-hook next to mpx: it is the fast hook entry point
+bin/mpx --demo                              # the full UI on sample data, no daemon or agent needed
+cd your-repo && /path/to/bin/mpx            # starts the daemon if needed and opens this repository
+bin/mpx doctor                              # paths, daemon, git, agents found, approval method
+```
+
+On Windows build `helpers/windows-hello` too and put `mpx-hello.exe` next to `mpx.exe` (see its README).
+
+Keys: the prefix is `Ctrl+\` (keys without it go to the focused pane, so the agent works normally). `Ctrl+\ p` opens the command palette, `Ctrl+\ n` starts a session, `Ctrl+\ ?` lists every key, `Ctrl+\ q` detaches; sessions keep running in the daemon.
+
+Other commands: `mpx push` (push a session's branch after a human-present approval), `mpx bench startup|hook|render` (results in [evidence/bench](evidence/bench/README.md)), `mpx daemon`, `mpx version`.
 
 ## Priorities, in order
 
