@@ -3,6 +3,7 @@ package fake
 import (
 	"context"
 	"encoding/json"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -169,7 +170,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestApprovalFlow(t *testing.T) {
-	b := New()
+	b := New(WithApprovalMethod("windows-hello"))
 	defer b.Close()
 	drain(b, "")
 	d, err := b.RespondApproval(ctx, protocol.ApprovalRespondParams{RequestID: ApprovalID, Outcome: core.Approved})
@@ -335,5 +336,56 @@ func TestCloseClosesEvents(t *testing.T) {
 	_ = b.Close()
 	_ = b.Close()
 	for range b.Events() {
+	}
+}
+
+func TestCatalogAndCounters(t *testing.T) {
+	b := New()
+	defer b.Close()
+	agents, err := b.Agents(ctx)
+	if err != nil || len(agents) != 2 || agents[0].Name != "claude-code" || !agents[0].Default {
+		t.Fatalf("agents = %+v, %v", agents, err)
+	}
+	roles, err := b.Roles(ctx, WorkspaceID)
+	if err != nil || len(roles) != 6 {
+		t.Fatalf("roles = %+v, %v", roles, err)
+	}
+	det, _ := b.Session(ctx, SessionAuth)
+	if det.Turn != 6 || det.Reports != 6 {
+		t.Errorf("auth detail = turn %d, reports %d", det.Turn, det.Reports)
+	}
+	if err := b.Message(ctx, SessionAuth, "go on", false); err != nil {
+		t.Fatal(err)
+	}
+	if det, _ = b.Session(ctx, SessionAuth); det.Turn != 7 {
+		t.Errorf("turn after a message = %d, want 7", det.Turn)
+	}
+	drain(b, protocol.TopicNoteDismissed)
+	if err := b.ActOnNote(ctx, protocol.NoteActParams{NoteID: "note_1", Action: core.NoteDismiss}); err != nil {
+		t.Fatal(err)
+	}
+	got := drain(b, protocol.TopicNoteDismissed)
+	if len(got) != 1 {
+		t.Fatalf("%d note.dismissed events", len(got))
+	}
+	var n core.Note
+	if json.Unmarshal(got[0], &n) != nil || n.ID != "note_1" || !n.Dismissed {
+		t.Errorf("note.dismissed = %+v", n)
+	}
+	specs, _ := b.Specs(ctx, WorkspaceID)
+	if specs[0].CriteriaVerified != 5 {
+		t.Errorf("verified criteria = %d", specs[0].CriteriaVerified)
+	}
+}
+
+func TestDefaultApprovalMethodMatchesThePlatform(t *testing.T) {
+	b := New()
+	defer b.Close()
+	want := "typed-code"
+	if runtime.GOOS == "windows" {
+		want = "windows-hello"
+	}
+	if got := b.ApprovalMethod(); got != want {
+		t.Errorf("ApprovalMethod = %q, want %q", got, want)
 	}
 }

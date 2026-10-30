@@ -67,8 +67,15 @@ func (d *Daemon) sessionDetail(ctx context.Context, s *session) (protocol.Sessio
 		det.Checkpoints = len(cps)
 	}
 
+	if sums, err := d.store.ListSummaries(ctx, info.ID, 0); err != nil {
+		return det, err
+	} else {
+		det.Reports = len(sums)
+	}
+
 	s.mu.Lock()
 	det.Conflicts = slices.Clone(s.conflicts)
+	det.Turn = s.turn
 	s.mu.Unlock()
 	if det.Conflicts == nil {
 		det.Conflicts = []core.Conflict{}

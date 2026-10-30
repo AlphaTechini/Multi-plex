@@ -39,6 +39,7 @@ type ToastMsg struct {
 	Tone  kit.Tone
 	Title string
 	Body  string
+	Hints []kit.Hint // optional actions shown under the body ("u undo")
 }
 
 // SwitchModeMsg asks the shell to switch the main view to a mode, e.g. the

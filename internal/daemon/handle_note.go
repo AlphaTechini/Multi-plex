@@ -38,6 +38,8 @@ func (d *Daemon) hNoteAct(ctx context.Context, _ *conn, p protocol.NoteActParams
 		if err := d.store.DismissNote(ctx, n.ID); err != nil {
 			return nil, err
 		}
+		n.Dismissed = true
+		d.publish(protocol.TopicNoteDismissed, n)
 	case core.NoteAsk:
 		if p.Text == "" {
 			return nil, badRequest("a question is required")

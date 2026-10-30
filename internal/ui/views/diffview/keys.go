@@ -28,7 +28,10 @@ func (m *Model) onKey(msg tea.KeyPressMsg) tea.Cmd {
 	case "s":
 		return m.toggleSideBySide()
 	case "S", "ctrl+s":
+		m.undo = undoQueue{} // sent comments cannot be taken back
 		return m.sendQueuedCmd()
+	case "u":
+		return m.undoQueued()
 	}
 	fv := m.fv
 	if fv == nil {

@@ -20,6 +20,8 @@
 //	e d              edit / delete the comment on the cursor line
 //	h l ← →          scroll sideways                esc             clear the selection
 //
+// u (while the "Comment queued" toast shows) takes back the comment queued last.
+//
 // In the comment box: enter queues, ctrl+s queues and sends now, ctrl+d keeps
 // a draft, esc cancels, shift+enter or alt+enter inserts a newline.
 //

@@ -13,6 +13,9 @@ type Capabilities struct {
 	Sandbox       bool // has its own OS sandbox on this platform
 	SideQuestions bool // supports side questions that do not change history (/btw)
 	Roles         bool // can apply role prompts and tool lists
+	// InitialPrompt is set when Prepare can pass LaunchSpec.Task on the
+	// command line, so the daemon does not type the task after start-up.
+	InitialPrompt bool
 }
 
 // LaunchSpec is everything an adapter needs to start a session's agent.
@@ -30,6 +33,7 @@ type LaunchSpec struct {
 	Model         string   // "" or "default" means the CLI's default
 	DenyRead      []string // credential stores, for adapters with a sandbox
 	Instructions  string   // short instruction telling the agent to use mpx MCP tools
+	Task          string   // first prompt, for adapters with Capabilities.InitialPrompt; empty on restarts
 }
 
 // Launch is the resolved command line for a session's agent.

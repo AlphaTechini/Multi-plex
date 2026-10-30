@@ -73,6 +73,13 @@ func (d *Daemon) createSession(p protocol.SessionCreateParams) (*session, error)
 		}
 	}
 
+	if _, err := d.vcs.ResolveRev(ctx, ws.Root, base); err != nil {
+		if p.BaseBranch == "" {
+			return nil, badRequest("the repository has no commits yet. Make an initial commit, then start the session.")
+		}
+		return nil, badRequest("the base branch %q does not exist in this repository", base)
+	}
+
 	d.createMu.Lock()
 	info, err := d.addWorktree(ctx, ws, p, base)
 	if err != nil {

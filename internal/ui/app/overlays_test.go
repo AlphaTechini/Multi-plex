@@ -1,13 +1,18 @@
 package app
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/alphatechini/multi-plex/internal/core"
 	"github.com/alphatechini/multi-plex/internal/protocol"
 	"github.com/alphatechini/multi-plex/internal/ui/backend/fake"
+	"github.com/alphatechini/multi-plex/internal/ui/kit"
+	"github.com/alphatechini/multi-plex/internal/ui/theme"
 	"github.com/alphatechini/multi-plex/internal/ui/view"
 )
 
@@ -47,7 +52,7 @@ func TestApprovalPendingEventOpensModal(t *testing.T) {
 }
 
 func TestApprovalApproveOnce(t *testing.T) {
-	h := newHarness(t, 180, 48)
+	h := newHarness(t, 180, 48, fake.WithApprovalMethod("windows-hello"))
 	h.keys("ctrl+\\", "!")
 	if len(h.m.overlays) != 1 {
 		t.Fatal("prefix ! must open the pending approval")
@@ -76,7 +81,7 @@ func TestApprovalApproveOnce(t *testing.T) {
 
 // While the OS check runs the prompt shows it and ignores keys.
 func TestApprovalWaitingState(t *testing.T) {
-	h := newHarness(t, 180, 48, fake.WithApprovalDelay(400*time.Millisecond))
+	h := newHarness(t, 180, 48, fake.WithApprovalMethod("windows-hello"), fake.WithApprovalDelay(400*time.Millisecond))
 	h.keys("ctrl+\\", "!")
 	h.key("enter")
 	a, ok := h.m.overlays[0].(*approvalOverlay)
@@ -189,14 +194,52 @@ func TestApprovalResolvedElsewhere(t *testing.T) {
 func TestApprovalListAll(t *testing.T) {
 	h := newHarness(t, 180, 48)
 	h.keys("ctrl+\\", "!")
-	if strings.Contains(h.plain(), "session_revoke.json") {
-		t.Fatal("paths must be collapsed at first")
+	out := h.plain()
+	for _, want := range []string{"session_refresh.json", "session_expiry.json", "session_revoke.json", "+3 more", "list all"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("collapsed Affects lacks %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "client_page1.json") {
+		t.Fatal("only three paths show at first")
 	}
 	h.key("l")
-	if !strings.Contains(h.plain(), "session_revoke.json") {
-		t.Fatal("l must list all paths")
+	out = h.plain()
+	if !strings.Contains(out, "client_last.json") || strings.Contains(out, "more") {
+		t.Fatalf("l must list all six paths:\n%s", out)
 	}
 	assertRect(t, h.screen(), 180, 48)
+}
+
+// TestApprovalNeverOverflows opens the prompt with many long paths on
+// terminals of several heights: the prompt must keep its buttons on screen.
+func TestApprovalNeverOverflows(t *testing.T) {
+	var paths []string
+	for i := 0; i < 20; i++ {
+		paths = append(paths, "internal/some/very/deep/package/with/a/long/name/"+strings.Repeat("sub/", 8)+"file_"+itoa(i)+".go")
+	}
+	for _, size := range [][2]int{{180, 48}, {110, 32}, {90, 24}, {80, 24}} {
+		h := newHarness(t, size[0], size[1])
+		req := core.ApprovalRequest{
+			ID: "apr_many", SessionID: fake.SessionAPI, Kind: core.ApprovalFileWrite, Tool: "Write",
+			Cwd: "/wt", Paths: paths, Layer: "Layer 2 writes outside the worktree", Rule: "outside · rules:1",
+		}
+		h.be.Emit(protocol.TopicApprovalPending, protocol.ApprovalPending{Request: req, Method: "windows-hello"})
+		h.pump()
+		for _, expand := range []bool{false, true} {
+			if expand {
+				h.key("l")
+			}
+			out := h.plain()
+			if !strings.Contains(out, "Approve once") || !strings.Contains(out, "Deny") {
+				t.Errorf("%dx%d expand=%v: buttons are off screen:\n%s", size[0], size[1], expand, out)
+			}
+			if !strings.Contains(out, "20 paths") {
+				t.Errorf("%dx%d expand=%v: path count missing", size[0], size[1], expand)
+			}
+			assertRect(t, h.screen(), size[0], size[1])
+		}
+	}
 }
 
 func TestPaletteFiltering(t *testing.T) {
@@ -355,14 +398,23 @@ func TestNewSessionFlow(t *testing.T) {
 			t.Errorf("dialog lacks %q", want)
 		}
 	}
+	// The agent comes from the daemon: Claude Code is the default.
+	h.key("tab")
+	if o.field != nsAgent || o.agentName() != "claude-code" {
+		t.Fatalf("field = %d agent = %q", o.field, o.agentName())
+	}
+	if out := h.plain(); !strings.Contains(out, "Claude Code") || !strings.Contains(out, "Shell") {
+		t.Fatalf("agents not offered:\n%s", out)
+	}
 	// Choose the role with tab, then arrows.
 	h.key("tab")
 	if o.field != nsRole {
 		t.Fatalf("field = %d", o.field)
 	}
-	h.key("left")
-	if newRoles[o.role].name != "planner" {
-		t.Fatalf("role = %s", newRoles[o.role].name)
+	h.key("right")
+	h.key("right")
+	if o.roleName() != "planner" {
+		t.Fatalf("role = %s", o.roleName())
 	}
 	if !strings.Contains(h.plain(), "Reads the code and writes a plan") {
 		t.Fatal("role description not shown")
@@ -385,7 +437,7 @@ func TestNewSessionFlow(t *testing.T) {
 		t.Fatalf("CreateSession called %d times", calls(h, "CreateSession"))
 	}
 	s := h.m.session()
-	if s == nil || s.Slug != "add-rate-limiting" || s.Role != "planner" || s.BaseBranch != "develop" {
+	if s == nil || s.Slug != "add-rate-limiting" || s.Role != "planner" || s.Agent != "claude-code" || s.BaseBranch != "develop" {
 		t.Fatalf("selected session = %+v", s)
 	}
 	if !strings.Contains(s.Task, "Keep the public API unchanged.") {
@@ -413,5 +465,271 @@ func TestNewSessionCancelAndSpecTask(t *testing.T) {
 	h.settle()
 	if out := h.plain(); !strings.Contains(out, "Implement task 4 of spec token-refresh") {
 		t.Fatalf("spec task not filled in:\n%s", out)
+	}
+}
+
+func TestNewSessionCatalog(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	if got := len(h.m.roles); got != 6 || h.m.info.Roles != 6 {
+		t.Errorf("roles = %d, sidebar count = %d, want the daemon's 6", got, h.m.info.Roles)
+	}
+	if !strings.Contains(h.plain(), "ROLES") {
+		t.Fatal("sidebar has no roles section")
+	}
+	h.keys("ctrl+\\", "n")
+	o := h.m.overlays[0].(*newSessionOverlay)
+	if len(o.agents) != 2 || len(o.roles) != 6 {
+		t.Fatalf("dialog lists %d agents and %d roles", len(o.agents), len(o.roles))
+	}
+	// Pick the shell agent and start: the session is created with it.
+	h.keys("tab")
+	h.key("right")
+	if o.agentName() != "shell" {
+		t.Fatalf("agent = %q", o.agentName())
+	}
+	h.keys("shift+tab")
+	h.typeText("Try the shell")
+	h.key("ctrl+enter")
+	h.settle()
+	h.pump()
+	h.settle()
+	if s := h.m.session(); s == nil || s.Agent != "shell" {
+		t.Fatalf("selected session = %+v", s)
+	}
+}
+
+func TestNewSessionRefusesMissingAgent(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	agents := []protocol.AgentInfo{
+		{Name: "claude-code", DisplayName: "Claude Code", Available: false, Detail: "claude was not found on PATH. Install Claude Code from https://code.claude.com", Default: true},
+		{Name: "shell", DisplayName: "Shell", Available: true},
+	}
+	var fresh newSessionOverlay
+	fresh.setCatalog(agents, nil)
+	if fresh.agentName() != "shell" {
+		t.Fatalf("an uninstalled default must give way to an installed agent, got %q", fresh.agentName())
+	}
+	h.keys("ctrl+\\", "n")
+	o := h.m.overlays[0].(*newSessionOverlay)
+	o.setCatalog(agents, nil)
+	o.agent = 0
+	h.typeText("Needs claude")
+	h.key("ctrl+enter")
+	if len(h.m.overlays) != 1 || !strings.Contains(o.err, "not installed") || calls(h, "CreateSession") != 0 {
+		t.Fatalf("err = %q, overlays %d", o.err, len(h.m.overlays))
+	}
+	if out := h.plain(); !strings.Contains(out, "Claude Code is not installed") || !strings.Contains(out, "Install Claude Code") {
+		t.Errorf("the problem and the remedy must be shown:\n%s", out)
+	}
+}
+
+func TestNewSessionWithoutCatalog(t *testing.T) {
+	// A backend that cannot list agents or roles still gets a working dialog.
+	h := newHarness(t, 180, 48)
+	h.m.agents, h.m.roles = nil, nil
+	n, _ := newNewSession(h.m)
+	if n.agentName() != "" || n.roleName() != "implementer" {
+		t.Errorf("fallback = agent %q role %q", n.agentName(), n.roleName())
+	}
+}
+
+func TestNoteDismissedUpdatesSidebarBadge(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	if got := h.m.notes[fake.SessionAuth]; got != 3 {
+		t.Fatalf("auth badge = %d, want 3", got)
+	}
+	h.be.Emit(protocol.TopicNoteDismissed, core.Note{ID: "note_1", SessionID: fake.SessionAuth, Number: 1, Dismissed: true})
+	h.pump()
+	if got := h.m.notes[fake.SessionAuth]; got != 2 {
+		t.Errorf("badge after note.dismissed = %d, want 2", got)
+	}
+	// Never below zero, even for a repeated event.
+	for range 4 {
+		h.be.Emit(protocol.TopicNoteDismissed, core.Note{ID: "x", SessionID: fake.SessionAuth, Dismissed: true})
+	}
+	h.pump()
+	if got := h.m.notes[fake.SessionAuth]; got != 0 {
+		t.Errorf("badge = %d, want 0", got)
+	}
+}
+
+func TestToastShowsHints(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	h.send(view.ToastMsg{
+		Tone: kit.ToneSuccess, Title: "Comment queued for auth-refactor", Body: "1 queued",
+		Hints: []kit.Hint{{Keys: "ctrl+s", Label: "send now"}, {Keys: "u", Label: "undo"}},
+	})
+	out := h.plain()
+	if !strings.Contains(out, "Comment queued for auth-refactor") || !strings.Contains(out, "send now") || !strings.Contains(out, "undo") {
+		t.Fatalf("toast hints missing:\n%s", out)
+	}
+}
+
+// notRepoBackend is the fake daemon opened in a directory outside git.
+type notRepoBackend struct{ *fake.Backend }
+
+func (notRepoBackend) OpenWorkspace(context.Context, string) (core.Workspace, error) {
+	return core.Workspace{}, &protocol.Error{Code: protocol.CodeNotARepo, Message: "/tmp/plain is not inside a git repository"}
+}
+
+func TestNotARepositoryScreen(t *testing.T) {
+	be := fake.New(fake.Empty())
+	t.Cleanup(func() { be.Close() })
+	m := newModel(Options{Backend: notRepoBackend{be}, WorkspaceDir: "/tmp/plain"}, theme.DarkPlus(), demoProbe)
+	m.noPump = true
+	h := &harness{t: t, m: m, be: be}
+	h.run(m.Init())
+	h.send(tea.WindowSizeMsg{Width: 180, Height: 48})
+	h.settle()
+	out := h.plain()
+	for _, want := range []string{"Not a git repository", "/tmp/plain is not inside one", "git init"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("screen lacks %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "bad_request") || strings.Contains(out, "Could not reach the daemon") {
+		t.Errorf("a raw error leaked into the screen:\n%s", out)
+	}
+	assertRect(t, h.screen(), 180, 48)
+	// New session is refused with a reason instead of opening a dialog.
+	h.keys("ctrl+\\", "n")
+	if len(h.m.overlays) != 0 || !strings.Contains(h.plain(), "No repository here") {
+		t.Errorf("new session must explain itself: overlays %d", len(h.m.overlays))
+	}
+}
+
+// shellSpy records the size a shell pane is opened at.
+type shellSpy struct {
+	*fake.Backend
+	cols, rows int
+}
+
+func (s *shellSpy) OpenShell(ctx context.Context, id core.SessionID, cols, rows int) (core.Pane, error) {
+	s.cols, s.rows = cols, rows
+	return s.Backend.OpenShell(ctx, id, cols, rows)
+}
+
+// TestTermShellOpensAtTheMainViewSize: the Term view is built the first time
+// the user switches to it, after the last resize, and must still open its
+// shell at the main view's size, not at a 20-column default.
+func TestTermShellOpensAtTheMainViewSize(t *testing.T) {
+	be := &shellSpy{Backend: fake.New()}
+	t.Cleanup(func() { be.Close() })
+	m := newModel(Options{Backend: be, WorkspaceDir: "/home/user/dev/multi-plex"}, theme.DarkPlus(), demoProbe)
+	m.noPump = true
+	h := &harness{t: t, m: m, be: be.Backend}
+	h.run(m.Init())
+	h.send(tea.WindowSizeMsg{Width: 180, Height: 48})
+	h.settle()
+	h.keys("ctrl+\\", "5")
+	h.settle()
+	wantCols, wantRows := m.lay.mainInner()
+	if be.cols != wantCols || be.rows != wantRows {
+		t.Errorf("shell opened at %dx%d, want the main view's %dx%d", be.cols, be.rows, wantCols, wantRows)
+	}
+}
+
+func TestApprovalLongCommandNeverOverflows(t *testing.T) {
+	cmd := "rm -rf " + strings.Repeat("some/long/path/component ", 80) + "&& echo done"
+	for _, size := range [][2]int{{180, 48}, {110, 32}, {80, 24}} {
+		h := newHarness(t, size[0], size[1])
+		req := core.ApprovalRequest{
+			ID: "apr_long", SessionID: fake.SessionAPI, Kind: core.ApprovalCommand, Tool: "Bash",
+			Command: cmd, Cwd: "/wt", Paths: []string{"a.go", "b.go", "c.go", "d.go"}, Layer: "Layer 4 recursive delete", Rule: "rm-recursive · rules:1",
+		}
+		h.be.Emit(protocol.TopicApprovalPending, protocol.ApprovalPending{Request: req, Method: "windows-hello"})
+		h.pump()
+		out := h.plain()
+		if !strings.Contains(out, "Approve once") || !strings.Contains(out, "Deny") {
+			t.Errorf("%dx%d: buttons are off screen:\n%s", size[0], size[1], out)
+		}
+		assertRect(t, h.screen(), size[0], size[1])
+		if size[1] <= 32 && !strings.Contains(out, "not shown") {
+			t.Errorf("%dx%d: a clipped command must say so:\n%s", size[0], size[1], out)
+		}
+	}
+}
+
+func TestRemoveSessionAsksFirst(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	before := len(h.m.sessions)
+	slug := h.m.session().Slug
+	h.keys("ctrl+\\", "X")
+	if _, ok := h.m.overlays[len(h.m.overlays)-1].(*confirmOverlay); !ok {
+		t.Fatalf("overlay = %T", h.m.overlays)
+	}
+	out := h.plain()
+	for _, want := range []string{"Remove " + slug + "?", "worktree", "Remove session", "Cancel"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("confirm lacks %q:\n%s", want, out)
+		}
+	}
+	h.key("esc")
+	if calls(h, "RemoveSession") != 0 || len(h.m.sessions) != before {
+		t.Fatal("esc must not remove anything")
+	}
+	h.keys("ctrl+\\", "X")
+	h.key("enter")
+	h.settle()
+	h.pump()
+	if calls(h, "RemoveSession") != 1 {
+		t.Fatalf("RemoveSession called %d times", calls(h, "RemoveSession"))
+	}
+	if len(h.m.sessions) != before-1 || h.m.sessionByID(h.m.cur) == nil && len(h.m.sessions) > 0 {
+		t.Errorf("sessions %d (was %d), cur %q", len(h.m.sessions), before, h.m.cur)
+	}
+}
+
+func TestPaletteShowsEscOnce(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	h.keys("ctrl+\\", "p")
+	if n := strings.Count(h.plain(), "esc close"); n != 1 {
+		t.Errorf(`"esc close" appears %d times, want 1`, n)
+	}
+}
+
+func TestNewSessionNoteWrapsAt80Columns(t *testing.T) {
+	h := newHarness(t, 80, 24)
+	h.keys("ctrl+\\", "n")
+	out := h.plain()
+	if !strings.Contains(out, "background.") || strings.Contains(out, "runs in the…") {
+		t.Errorf("the setup note must wrap, not truncate:\n%s", out)
+	}
+	if !strings.Contains(out, "Start session") || !strings.Contains(out, "╰") {
+		t.Errorf("the dialog must fit a 24-row terminal, buttons and frame included:\n%s", out)
+	}
+	assertRect(t, h.screen(), 80, 24)
+}
+
+func TestToastStaysInsideTheDrawer(t *testing.T) {
+	h := newHarness(t, 80, 24)
+	h.keys("ctrl+\\", "a") // open the agent drawer
+	if !h.m.lay.drawer {
+		t.Skip("no drawer at this size")
+	}
+	h.send(view.ToastMsg{Tone: kit.ToneSuccess, Title: "Saved", Body: "ok"})
+	blocks, xs, _ := h.m.toastRects()
+	if len(blocks) == 0 {
+		t.Fatal("no toast drawn")
+	}
+	left := h.m.lay.w - h.m.lay.drawerW
+	for i := range blocks {
+		if xs[i] <= left || xs[i]+kit.Width(strings.Split(blocks[i], "\n")[0]) >= h.m.lay.w {
+			t.Errorf("toast at x=%d width %d straddles the drawer frame at x=%d", xs[i], kit.Width(strings.Split(blocks[i], "\n")[0]), left)
+		}
+	}
+}
+
+func TestApprovalDotIsStaticWithReducedMotion(t *testing.T) {
+	h := newHarness(t, 180, 48)
+	h.m.th = h.m.th.WithReducedMotion(true)
+	for frame := 0; frame < 24; frame++ {
+		h.m.frame = frame
+		if !h.m.blinkOn() {
+			t.Fatalf("approval dot blinks at frame %d with reduced motion", frame)
+		}
+	}
+	if h.m.needsTick() && len(h.m.sessions) == 0 {
+		t.Error("nothing animates, yet a tick is armed")
 	}
 }

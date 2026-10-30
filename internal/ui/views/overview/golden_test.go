@@ -11,9 +11,8 @@ import (
 
 // TestGolden pins the layout of the docs/16 Overview mockups at the main
 // view's inner size for 180×48 (90×45) and 110×32 (99×29). The goldens equal
-// the mockups' main region except for three data-driven lines: the spinner
-// frame, "5/9 criteria verified" (the daemon reports only the criteria
-// count) and the compact Done sentence. Run with MPX_UPDATE_GOLDEN=1 to
+// the mockups' main region except for two data-driven lines: the spinner
+// frame and the compact Done sentence. Run with MPX_UPDATE_GOLDEN=1 to
 // rewrite them.
 func TestGolden(t *testing.T) {
 	cases := []struct {

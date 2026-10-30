@@ -55,6 +55,14 @@ func TestCalls(t *testing.T) {
 		switch method {
 		case protocol.MethodWorkspaceOpen:
 			return core.Workspace{ID: "w1", Name: "multi-plex"}
+		case protocol.MethodHello:
+			return protocol.HelloResult{Protocol: protocol.Version, Approver: "typed-code"}
+		case protocol.MethodAgentList:
+			return []protocol.AgentInfo{{Name: "shell", DisplayName: "Shell", Available: true}}
+		case protocol.MethodRoleList:
+			var p protocol.WorkspaceRef
+			_ = json.Unmarshal(params, &p)
+			return []protocol.RoleInfo{{Name: "implementer", Source: string(p.WorkspaceID)}}
 		case protocol.MethodSessionList:
 			return []core.Session{{ID: "s1", Slug: "auth-refactor"}}
 		case protocol.MethodSessionCreate:
@@ -74,6 +82,17 @@ func TestCalls(t *testing.T) {
 	if err != nil || len(ss) != 1 || ss[0].Slug != "auth-refactor" {
 		t.Fatalf("Sessions = %v, %v", ss, err)
 	}
+	if got := b.ApprovalMethod(); got != "typed-code" {
+		t.Errorf("ApprovalMethod = %q, want the hello result's approver", got)
+	}
+	ags, err := b.Agents(ctx)
+	if err != nil || len(ags) != 1 || ags[0].Name != "shell" {
+		t.Fatalf("Agents = %v, %v", ags, err)
+	}
+	rs, err := b.Roles(ctx, ws.ID)
+	if err != nil || len(rs) != 1 || rs[0].Source != "w1" {
+		t.Fatalf("Roles = %v, %v (the workspace must be passed)", rs, err)
+	}
 	s, err := b.CreateSession(ctx, protocol.SessionCreateParams{Task: "do it", Role: "planner"})
 	if err != nil || s.Task != "do it" || s.Role != "planner" {
 		t.Fatalf("CreateSession = %v, %v", s, err)
@@ -81,7 +100,8 @@ func TestCalls(t *testing.T) {
 	if err := b.StopSession(ctx, "s1"); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{protocol.MethodWorkspaceOpen, protocol.MethodSubscribe, protocol.MethodSessionList, protocol.MethodSessionCreate, protocol.MethodSessionStop}
+	want := []string{protocol.MethodWorkspaceOpen, protocol.MethodHello, protocol.MethodSubscribe, protocol.MethodSessionList,
+		protocol.MethodAgentList, protocol.MethodRoleList, protocol.MethodSessionCreate, protocol.MethodSessionStop}
 	if len(methods) != len(want) {
 		t.Fatalf("methods = %v, want %v", methods, want)
 	}
@@ -178,5 +198,12 @@ func TestFramesCoalesceNotDrop(t *testing.T) {
 	last := n - 1
 	if rows[last%2] != string(rune('A'+last%26)) || rows[(last-1)%2] != string(rune('A'+(last-1)%26)) {
 		t.Fatalf("final screen state wrong: %v", rows)
+	}
+}
+
+func TestApprovalMethodBeforeHello(t *testing.T) {
+	b, _ := newPair(t)
+	if got := b.ApprovalMethod(); got != "" {
+		t.Errorf("ApprovalMethod before OpenWorkspace = %q, want empty", got)
 	}
 }

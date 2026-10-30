@@ -33,6 +33,15 @@ func (Adapter) DisplayName() string { return "Shell" }
 // side questions or roles.
 func (Adapter) Capabilities() agent.Capabilities { return agent.Capabilities{} }
 
+// Detect reports the shell Prepare would start.
+func (Adapter) Detect() (bool, string) {
+	argv, err := shellArgv(runtime.GOOS, os.Getenv, exec.LookPath)
+	if err != nil {
+		return false, err.Error()
+	}
+	return true, argv[0]
+}
+
 // Prepare returns the command line for the user's shell, started in the
 // worktree with the session's environment plus MPX_SESSION_ID. A nil
 // spec.Env inherits the current environment.
@@ -113,8 +122,28 @@ func (Adapter) EncodeHookResponse(agent.HookEvent, agent.HookResponse) ([]byte, 
 // FailClosed produces nothing and exits 2, though a shell never calls hooks.
 func (Adapter) FailClosed(string) ([]byte, int) { return nil, 2 }
 
-// TypeMessage types text into the shell and presses Enter.
-func (Adapter) TypeMessage(text string) []byte { return []byte(text + "\r") }
+// TypeMessage types text into the shell and presses Enter. A multi-line
+// message (review comments, which quote code) is typed as comment lines, one
+// "# " line each, so a shell never runs the quoted code. Both bash and
+// PowerShell treat # as a comment. Control characters are dropped.
+func (Adapter) TypeMessage(text string) []byte {
+	text = strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\r", "\n")
+	if !strings.Contains(text, "\n") {
+		return []byte(text + "\r")
+	}
+	var b strings.Builder
+	for _, line := range strings.Split(text, "\n") {
+		b.WriteString("# ")
+		b.WriteString(strings.Map(func(r rune) rune {
+			if r < ' ' && r != '\t' || r == 0x7f {
+				return -1
+			}
+			return r
+		}, line))
+		b.WriteByte('\r')
+	}
+	return []byte(b.String())
+}
 
 // Interrupt sends Ctrl+C.
 func (Adapter) Interrupt() []byte { return []byte("\x03") }

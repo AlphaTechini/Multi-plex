@@ -268,6 +268,9 @@ func (m *Model) onCommentSaved(msg commentSavedMsg) tea.Cmd {
 		return nil
 	}
 	name := m.sessionName()
+	if msg.sent != nil {
+		m.undo = undoQueue{}
+	}
 	switch {
 	case msg.sent != nil && msg.sendErr == nil:
 		return tea.Batch(toastCmd(kit.ToneSuccess, sentTitle(msg.sent.Sent), "to "+name), m.commentsCmd())
@@ -276,8 +279,9 @@ func (m *Model) onCommentSaved(msg commentSavedMsg) tea.Cmd {
 	case msg.c.Status == core.CommentDraft:
 		return toastCmd(kit.ToneInfo, "Draft saved", "Only you see drafts. Edit one with e to queue it.")
 	}
-	return toastCmd(kit.ToneSuccess, "Comment queued for "+name,
-		itoa(m.queuedCount())+" queued "+m.t.Glyphs.Dot+" sent at the agent's next turn")
+	m.armUndo(msg.c.ID)
+	return toastHintsCmd(kit.ToneSuccess, "Comment queued for "+name,
+		itoa(m.queuedCount())+" queued "+m.t.Glyphs.Dot+" sent at the agent's next turn", queuedHints)
 }
 
 // upsertSaved stores the backend's version of a comment, replacing the
@@ -321,6 +325,7 @@ func (m *Model) onSent(msg sentMsg) tea.Cmd {
 	if msg.err != nil {
 		return toastErr("Could not send the comments", msg.err)
 	}
+	m.undo = undoQueue{}
 	return tea.Batch(toastCmd(kit.ToneSuccess, sentTitle(msg.res.Sent), "to "+m.sessionName()), m.commentsCmd())
 }
 

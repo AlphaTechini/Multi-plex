@@ -45,5 +45,15 @@ func (Adapter) Capabilities() agent.Capabilities {
 		Sandbox:       runtime.GOOS != "windows",
 		SideQuestions: true,
 		Roles:         true,
+		InitialPrompt: true,
 	}
+}
+
+// Detect reports whether the claude command is on PATH.
+func (Adapter) Detect() (bool, string) {
+	p, err := findClaude()
+	if err != nil {
+		return false, "claude was not found on PATH. Install Claude Code from https://code.claude.com"
+	}
+	return true, p
 }

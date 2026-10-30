@@ -19,11 +19,16 @@ func (d *Daemon) hSpecList(ctx context.Context, _ *conn, p protocol.WorkspaceRef
 	if err != nil {
 		return nil, err
 	}
+	roots := []string{ws.Root}
+	for _, s := range d.sessionsOf(ws.ID) {
+		roots = append(roots, s.snap().WorktreePath)
+	}
 	out := make([]protocol.SpecInfo, len(infos))
 	for i, in := range infos {
 		out[i] = protocol.SpecInfo{
 			Slug: in.Slug, Title: in.Title,
 			TasksDone: in.TasksDone, TasksTotal: in.TasksTotal, CriteriaTotal: in.CriteriaTotal,
+			CriteriaVerified: verifiedCriteria(roots, in.Slug),
 		}
 	}
 	return out, nil

@@ -8,7 +8,7 @@
 
 ## Session lifecycle
 
-1. **Create.** Pick a task (free text, or a task from a spec), a role ([10](10-agent-roles-and-skills.md)) and a base branch.
+1. **Create.** Pick a task (free text, or a task from a spec), an agent (the installed adapters; the daemon lists them with `agent.list`), a role ([10](10-agent-roles-and-skills.md), listed with `role.list`) and a base branch. The repository needs at least one commit.
 2. **Worktree.** The daemon creates `<data dir>/worktrees/<workspace-id>/<session-slug>` on branch `mpx/<session-slug>`. Worktrees live outside the repository so file watchers and search in the main checkout ignore them.
 3. **Setup.** Run the workspace's setup recipe (see below) in the background.
 4. **Run.** Launch the agent CLI in a PTY inside the worktree, with the scrubbed environment from [04](04-safety.md) and the hook and MCP configuration.

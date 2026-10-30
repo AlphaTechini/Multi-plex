@@ -198,8 +198,8 @@ func (p *paletteOverlay) view(m *Model, screen string) string {
 	}
 	lines = append(lines, "", kit.Divider(t, kit.DividerOptions{Width: w}))
 	lines = append(lines, kit.Fit(" "+kit.KeyHints(t, []kit.Hint{
-		{Keys: "up down", Label: "move"}, {Keys: "enter", Label: "run"}, {Keys: "esc", Label: "close"},
-	}, 0), w))
+		{Keys: "up down", Label: "move"}, {Keys: "enter", Label: "run"},
+	}, 0), w)) // esc is shown at the top right
 	mo.Body = strings.Join(lines, "\n")
 	return kit.Modal(t, mo)
 }

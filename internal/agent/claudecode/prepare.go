@@ -81,8 +81,8 @@ func (Adapter) Prepare(spec agent.LaunchSpec) (agent.Launch, error) {
 	if m := spec.Model; m != "" && m != "default" {
 		argv = append(argv, "--model", m)
 	}
-	// The tool lists are variadic flags: each rule is its own argument, and
-	// nothing positional follows them.
+	// The tool lists and --mcp-config are variadic flags: each value is its
+	// own argument, and the prompt follows after "--" so none can swallow it.
 	if len(spec.AllowedTools) > 0 {
 		argv = append(argv, "--allowedTools")
 		argv = append(argv, spec.AllowedTools...)
@@ -91,12 +91,26 @@ func (Adapter) Prepare(spec agent.LaunchSpec) (agent.Launch, error) {
 		argv = append(argv, "--disallowedTools")
 		argv = append(argv, spec.DeniedTools...)
 	}
+	if task := strings.TrimSpace(spec.Task); task != "" {
+		argv = append(argv, "--", initialPrompt(task))
+	}
 
 	return agent.Launch{
 		Argv: argv,
 		Env:  withEnv(spec.Env, "MPX_SESSION_ID="+sessionID, "MPX_ADAPTER="+Name),
 		Dir:  spec.WorktreePath,
 	}, nil
+}
+
+// initialPrompt returns the positional prompt for task. The task is passed
+// as one argument, so it needs no quoting. A one-word task would be read as a
+// Claude Code subcommand ("doctor", "update", ...) even after "--", so it
+// gets a short lead-in.
+func initialPrompt(task string) string {
+	if strings.ContainsAny(task, " \t\r\n") {
+		return task
+	}
+	return "Task: " + task
 }
 
 // systemPrompt joins the instructions and the role prompt.

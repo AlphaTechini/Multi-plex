@@ -70,7 +70,7 @@ func (m *model) reset() {
 	m.cards = nil
 	m.sel, m.top, m.zone, m.fileSel = 0, 0, zoneCards, 0
 	m.in = nil
-	m.reports, m.lastSummaryAt, m.checkedAt = 0, time.Time{}, time.Time{}
+	m.checkedAt = time.Time{}
 	m.loadErr = ""
 	m.nFiles, m.nVisFiles, m.fileList = 0, 0, nil
 }
@@ -111,7 +111,6 @@ func (m *model) onLoaded(msg loadedMsg) tea.Cmd {
 		if m.checkedAt.IsZero() {
 			m.checkedAt = msg.at
 		}
-		m.trackReports()
 		m.rebuildCards()
 	}
 	if m.dirty {
@@ -120,22 +119,6 @@ func (m *model) onLoaded(msg loadedMsg) tea.Cmd {
 		return m.startLoad(withSpecs)
 	}
 	return nil
-}
-
-// trackReports counts the reports seen. The daemon has no report counter, so
-// the first report seen counts as one and each newer one adds one.
-func (m *model) trackReports() {
-	s := m.detail.Summary
-	if s == nil {
-		return
-	}
-	switch {
-	case m.reports == 0:
-		m.reports = 1
-	case s.At.After(m.lastSummaryAt):
-		m.reports++
-	}
-	m.lastSummaryAt = s.At
 }
 
 // rebuildCards recomputes the visible card list (undismissed, newest first)
@@ -183,6 +166,13 @@ func (m *model) onEvent(ev backend.Event) tea.Cmd {
 	case protocol.TopicNote:
 		var n core.Note
 		if json.Unmarshal(ev.Data, &n) == nil && n.SessionID == id {
+			return m.startLoad(false)
+		}
+	case protocol.TopicNoteDismissed:
+		var n core.Note
+		if json.Unmarshal(ev.Data, &n) == nil && n.SessionID == id {
+			m.dismissed[n.ID] = true
+			m.rebuildCards()
 			return m.startLoad(false)
 		}
 	case protocol.TopicSummary:

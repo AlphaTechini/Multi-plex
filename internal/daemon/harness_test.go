@@ -42,6 +42,9 @@ func TestHelperProcess(t *testing.T) {
 		return
 	}
 	fmt.Println("helper-agent-ready")
+	if p, ok := os.LookupEnv("MPX_TEST_PROMPT"); ok {
+		fmt.Printf("helper-prompt:%q\r\n", p)
+	}
 	buf := make([]byte, 4096)
 	for {
 		n, err := os.Stdin.Read(buf)
@@ -57,7 +60,10 @@ func TestHelperProcess(t *testing.T) {
 // helperAdapter is a hook-capable agent adapter that runs TestHelperProcess.
 type helperAdapter struct{ claudecode.Adapter }
 
-func (helperAdapter) Name() string        { return "helper" }
+func (helperAdapter) Name() string { return "helper" }
+func (helperAdapter) Capabilities() agent.Capabilities {
+	return agent.Capabilities{Hooks: true, MCP: true, Roles: true}
+}
 func (helperAdapter) DisplayName() string { return "Helper" }
 func (helperAdapter) Prepare(spec agent.LaunchSpec) (agent.Launch, error) {
 	env := append(append([]string(nil), spec.Env...), "MPX_TEST_HELPER=agent")
@@ -68,7 +74,24 @@ func (helperAdapter) Prepare(spec agent.LaunchSpec) (agent.Launch, error) {
 	}, nil
 }
 
-func init() { agent.Register(helperAdapter{}) }
+// promptAdapter is helperAdapter with InitialPrompt: the task reaches the
+// agent as launch input, which the helper prints, instead of being typed.
+type promptAdapter struct{ helperAdapter }
+
+func (promptAdapter) Name() string { return "prompt-helper" }
+func (promptAdapter) Capabilities() agent.Capabilities {
+	return agent.Capabilities{Hooks: true, MCP: true, Roles: true, InitialPrompt: true}
+}
+func (a promptAdapter) Prepare(spec agent.LaunchSpec) (agent.Launch, error) {
+	l, err := a.helperAdapter.Prepare(spec)
+	l.Env = append(l.Env, "MPX_TEST_PROMPT="+spec.Task)
+	return l, err
+}
+
+func init() {
+	agent.Register(helperAdapter{})
+	agent.Register(promptAdapter{})
+}
 
 // harness is a daemon running in-process on a temp socket with an in-memory
 // store, a real git repository, real PTYs and a client connected to it.

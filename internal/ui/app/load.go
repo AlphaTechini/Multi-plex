@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -17,6 +18,8 @@ type loadedMsg struct {
 	ws        core.Workspace
 	sessions  []core.Session
 	specs     []protocol.SpecInfo
+	agents    []protocol.AgentInfo
+	roles     []protocol.RoleInfo
 	approvals []core.ApprovalRequest
 	notes     map[core.SessionID]int
 	info      workspaceInfo
@@ -37,7 +40,7 @@ func (m *Model) loadCmd() tea.Cmd {
 		out := loadedMsg{ws: ws, notes: map[core.SessionID]int{}}
 		var wg sync.WaitGroup
 		var mu sync.Mutex
-		wg.Add(4)
+		wg.Add(5)
 		go func() {
 			defer wg.Done()
 			ss, err := be.Sessions(ctx, "")
@@ -54,6 +57,14 @@ func (m *Model) loadCmd() tea.Cmd {
 			sp, _ := be.Specs(ctx, ws.ID)
 			mu.Lock()
 			out.specs = sp
+			mu.Unlock()
+		}()
+		go func() {
+			defer wg.Done()
+			ag, _ := be.Agents(ctx)
+			ro, _ := be.Roles(ctx, ws.ID)
+			mu.Lock()
+			out.agents, out.roles = ag, ro
 			mu.Unlock()
 		}()
 		go func() {
@@ -93,6 +104,11 @@ func countOpen(ns []core.Note) int {
 
 // handleLoaded installs the loaded data.
 func (m *Model) handleLoaded(l loadedMsg) tea.Cmd {
+	var perr *protocol.Error
+	if errors.As(l.err, &perr) && perr.Code == protocol.CodeNotARepo {
+		m.loadErr, m.notRepo = perr.Message, true
+		return nil
+	}
 	if l.err != nil {
 		m.loadErr = l.err.Error()
 		return m.addToast(toastSpec{tone: kit.ToneDanger, title: "Could not reach the daemon", body: l.err.Error(), sticky: true})
@@ -101,6 +117,10 @@ func (m *Model) handleLoaded(l loadedMsg) tea.Cmd {
 	m.ws = l.ws
 	m.env.Workspace = l.ws
 	m.specs, m.info = l.specs, l.info
+	m.agents, m.roles = l.agents, l.roles
+	if l.roles != nil {
+		m.info.Roles = len(l.roles) // the daemon's list is the truth, not the files probe
+	}
 	m.notes = l.notes
 	m.setSessions(l.sessions)
 	var cmds []tea.Cmd

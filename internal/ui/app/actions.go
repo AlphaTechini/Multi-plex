@@ -47,6 +47,7 @@ func buildStaticActions() []action {
 			return s != nil && s.State.Active()
 		}},
 		{group: "Sessions", title: "Restart session", keys: []string{"r"}, run: (*Model).actRestart, when: hasSession},
+		{group: "Sessions", title: "Remove session", keys: []string{"X"}, run: (*Model).actRemove, when: hasSession},
 		{group: "Sessions", title: "Toggle follow mode", keys: []string{"f"}, run: (*Model).actFollow, when: hasSession},
 		{group: "Sessions", title: "Review pending approvals", keys: []string{"!"}, run: (*Model).actApprovals, when: func(m *Model) bool { return len(m.approvals) > 0 }},
 	}
@@ -151,6 +152,9 @@ func (m *Model) actHelp() tea.Cmd {
 }
 
 func (m *Model) actNewSession() tea.Cmd {
+	if m.notRepo {
+		return m.addToast(toastSpec{tone: kit.ToneWarning, title: "No repository here", body: "Start mpx from inside a git repository to create sessions."})
+	}
 	o, cmd := newNewSession(m)
 	m.pushOverlay(o)
 	return cmd

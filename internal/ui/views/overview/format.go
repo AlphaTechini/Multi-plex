@@ -77,8 +77,13 @@ func lowerFirst(s string) string {
 
 // noun returns "1 card" or "3 cards".
 func noun(n int, one, many string) string {
+	return strconv.Itoa(n) + " " + plural(n, one, many)
+}
+
+// plural returns one for 1 and many otherwise.
+func plural(n int, one, many string) string {
 	if n == 1 {
-		return "1 " + one
+		return one
 	}
-	return strconv.Itoa(n) + " " + many
+	return many
 }

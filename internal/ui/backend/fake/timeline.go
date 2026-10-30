@@ -52,6 +52,7 @@ func (b *Backend) step(n int) {
 		sum := b.summaries[SessionAuth]
 		sum.Done = append(sum.Done, "Updated Client.Do to use the cached token")
 		sum.At = now
+		b.reports[SessionAuth]++
 		b.emit(protocol.TopicSummary, *sum)
 		auth.UpdatedAt = now
 		b.emit(protocol.TopicSession, *auth)

@@ -13,7 +13,7 @@ const defaultRoot = "/home/user/dev/multi-plex"
 func (b *Backend) seed(c config) {
 	now := b.now()
 	b.ws = core.Workspace{ID: WorkspaceID, Root: c.root, Name: "multi-plex", CreatedAt: now.Add(-72 * time.Hour)}
-	b.specs = []protocol.SpecInfo{{Slug: "token-refresh", Title: "Token refresh", TasksDone: 3, TasksTotal: 7, CriteriaTotal: 9}}
+	b.specs = []protocol.SpecInfo{{Slug: "token-refresh", Title: "Token refresh", TasksDone: 3, TasksTotal: 7, CriteriaTotal: 9, CriteriaVerified: 5}}
 	if c.empty {
 		return
 	}
@@ -64,6 +64,10 @@ func (b *Backend) seed(c config) {
 		Next:         "Nothing further",
 		At:           now.Add(-9 * time.Minute),
 	}
+
+	b.turns[SessionAuth], b.reports[SessionAuth] = 6, 6
+	b.turns[SessionAPI] = 4
+	b.turns[SessionDocs], b.reports[SessionDocs] = 5, 3
 
 	b.notes[SessionAuth] = []core.Note{
 		{

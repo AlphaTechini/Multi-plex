@@ -171,6 +171,22 @@ func TestSessionStartTypesTask(t *testing.T) {
 	}
 }
 
+func TestInitialPromptTaskIsNotTyped(t *testing.T) {
+	h := newHarness(t)
+	sess := h.newSession("prompt-helper", "from the command line")
+	h.ev.waitScreen(t, sess.AgentPane, `helper-prompt:"task from the command line"`)
+	h.hook(sess.ID, agent.HookEvent{Kind: agent.HookSessionStart})
+	time.Sleep(taskTypeDelay + 300*time.Millisecond)
+	if n := strings.Count(h.ev.screenText(sess.AgentPane), "helper-got"); n != 0 {
+		t.Errorf("task typed %d times for an InitialPrompt adapter", n)
+	}
+
+	// A restart is not a first launch: the task is not passed again.
+	var again core.Session
+	h.mustCall(protocol.MethodSessionRestart, protocol.SessionRef{SessionID: sess.ID}, &again)
+	h.ev.waitScreen(t, again.AgentPane, `helper-prompt:""`)
+}
+
 func TestCheckpointRestore(t *testing.T) {
 	h := newHarness(t)
 	sess := h.newSession("helper", "restore")

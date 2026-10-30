@@ -62,8 +62,12 @@ func (m *model) cardKey(k string) tea.Cmd {
 		return m.openRef(m.sel, 0)
 	default:
 		if len(k) == 1 && k[0] >= '1' && k[0] <= '9' {
-			if i := int(k[0] - '1'); i < len(m.cards) {
-				m.selectCard(i)
+			// A digit picks the card showing that number.
+			for i, n := range m.cards {
+				if cardNumber(n, i) == int(k[0]-'0') {
+					m.selectCard(i)
+					break
+				}
 			}
 		}
 	}
@@ -131,7 +135,7 @@ func (m *model) openInput(a core.NoteAction) {
 	if m.sel < 0 || m.sel >= len(m.cards) {
 		return
 	}
-	m.in = newInput(m.th, a, m.cards[m.sel].ID, m.sel+1)
+	m.in = newInput(m.th, a, m.cards[m.sel].ID, cardNumber(m.cards[m.sel], m.sel))
 }
 
 // dismiss hides the selected card at once and tells the daemon.
@@ -142,7 +146,7 @@ func (m *model) dismiss() tea.Cmd {
 	n := m.cards[m.sel]
 	m.dismissed[n.ID] = true
 	m.rebuildCards()
-	return actCmd(m.be, protocol.NoteActParams{NoteID: n.ID, Action: core.NoteDismiss}, m.sel+1)
+	return actCmd(m.be, protocol.NoteActParams{NoteID: n.ID, Action: core.NoteDismiss}, cardNumber(n, m.sel))
 }
 
 // openRef opens reference r of card i in the Code view.

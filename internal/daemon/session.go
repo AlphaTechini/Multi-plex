@@ -41,6 +41,8 @@ type session struct {
 	taskPending bool
 	taskTyped   bool
 
+	turn int // prompt-submit hook events seen; in memory only
+
 	conflicts []core.Conflict
 	changes   []vcs.FileChange
 	changesAt time.Time

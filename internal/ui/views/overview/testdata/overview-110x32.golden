@@ -26,4 +26,4 @@
   ● Will conflict with api-pagination in src/api/client.go   merge-tree, checked 1m ago            
                                                                                                    
   SPEC                                                                                             
-  token-refresh   ━━━━━━━━━━────────────── 3/7  tasks   9 criteria                                 
+  token-refresh   ━━━━━━━━━━────────────── 3/7  tasks   5/9 criteria verified                      

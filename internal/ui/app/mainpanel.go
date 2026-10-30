@@ -73,6 +73,16 @@ func (m *Model) renderMain() string {
 	}
 	iw, ih := kit.PanelInner(po)
 	switch {
+	case m.notRepo:
+		po.Content = kit.EmptyState(t, kit.EmptyStateOptions{
+			Width: iw, Height: ih,
+			Eyebrow: "m u l t i p l e x",
+			Title:   "Not a git repository",
+			Body: "Multiplex gives every agent its own git worktree and branch, so it needs a repository to work in. " +
+				kit.Truncate(m.o.WorkspaceDir, 44, "…") + " is not inside one.\n\n" +
+				"Run git init here, or start mpx from inside a repository.",
+			Hints: []kit.Hint{{Keys: m.prefix + " q", Label: "quit"}},
+		})
 	case !m.loaded:
 		body := "Connecting to the daemon…"
 		if m.loadErr != "" {

@@ -39,8 +39,8 @@ func (m *model) header(c *canvas, cw int) {
 		line += sep + paint(t.Text.Muted, false, t.Glyphs.Branch+" "+b)
 	}
 	var tail []string
-	if m.reports > 0 {
-		tail = append(tail, "turn "+strconv.Itoa(m.reports))
+	if m.hasDetail && m.detail.Turn > 0 {
+		tail = append(tail, "turn "+strconv.Itoa(m.detail.Turn))
 	}
 	if !s.CreatedAt.IsZero() {
 		tail = append(tail, elapsed(m.clock.Sub(s.CreatedAt)))

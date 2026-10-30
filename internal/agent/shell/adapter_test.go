@@ -97,6 +97,10 @@ func TestInput(t *testing.T) {
 	if got := string(a.TypeMessage("ls -la")); got != "ls -la\r" {
 		t.Errorf("TypeMessage = %q", got)
 	}
+	// Multi-line text is commented out so quoted code is never run.
+	if got := string(a.TypeMessage("Review comments:\r\nrm -rf x\n\x1b[31mred\x03")); got != "# Review comments:\r# rm -rf x\r# [31mred\r" {
+		t.Errorf("multi-line TypeMessage = %q", got)
+	}
 	if got := string(a.Interrupt()); got != "\x03" {
 		t.Errorf("Interrupt = %q", got)
 	}

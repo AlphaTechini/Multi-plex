@@ -52,6 +52,9 @@ const (
 	MethodCheckpointList    = "checkpoint.list"    // SessionRef → []core.Checkpoint
 	MethodCheckpointRestore = "checkpoint.restore" // CheckpointRestoreParams → Empty
 
+	MethodAgentList = "agent.list" // Empty → []AgentInfo (adapters the daemon knows)
+	MethodRoleList  = "role.list"  // WorkspaceRef → []RoleInfo (roles visible to the workspace)
+
 	MethodSpecList = "spec.list" // WorkspaceRef → []SpecInfo
 	MethodSpecGet  = "spec.get"  // SpecGetParams → SpecDoc
 
@@ -128,6 +131,8 @@ type SessionDetail struct {
 	Checkpoints int              `json:"checkpoints"`
 	Approvals   int              `json:"approvals_last_hour"`
 	LastMessage string           `json:"last_message,omitempty"` // fallback when no summary
+	Turn        int              `json:"turn"`                   // prompts submitted to the agent so far
+	Reports     int              `json:"reports"`                // progress reports (summaries) so far
 }
 
 // SessionFollowParams toggles follow mode.
@@ -224,6 +229,26 @@ type SpecInfo struct {
 	TasksDone     int    `json:"tasks_done"`
 	TasksTotal    int    `json:"tasks_total"`
 	CriteriaTotal int    `json:"criteria_total"`
+	// CriteriaVerified counts distinct criteria that agents recorded as met
+	// with criterion_verify (verification.md, in any session's worktree).
+	CriteriaVerified int `json:"criteria_verified"`
+}
+
+// AgentInfo describes one agent adapter the daemon can run.
+type AgentInfo struct {
+	Name        string `json:"name"`         // registry name, the value of SessionCreateParams.Agent
+	DisplayName string `json:"display_name"` // e.g. "Claude Code"
+	Available   bool   `json:"available"`    // the agent's program was found on PATH
+	Detail      string `json:"detail"`       // where it was found, or how to install it
+	Default     bool   `json:"default"`      // used when a session names no agent
+}
+
+// RoleInfo describes one role visible to a workspace.
+type RoleInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Source      string `json:"source"`  // "builtin", "global" or "workspace"
+	Default     bool   `json:"default"` // used when a session names no role
 }
 
 // SpecGetParams reads one spec.

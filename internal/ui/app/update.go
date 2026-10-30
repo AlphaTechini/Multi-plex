@@ -63,13 +63,15 @@ func (m *Model) update(msg tea.Msg) tea.Cmd {
 	case view.SwitchModeMsg:
 		return m.switchMode(msg)
 	case view.ToastMsg:
-		return m.addToast(toastSpec{tone: msg.Tone, title: msg.Title, body: msg.Body})
+		return m.addToast(toastSpec{tone: msg.Tone, title: msg.Title, body: msg.Body, hints: msg.Hints})
 	case sessionCreatedMsg:
 		return m.handleCreated(msg)
 	case approvalResultMsg:
 		return m.handleApprovalResult(msg)
 	case specTaskMsg:
 		return m.routeToOverlay(msg)
+	case catalogMsg:
+		return m.handleCatalog(msg)
 	case tea.FocusMsg:
 		m.blurred = false
 		return nil

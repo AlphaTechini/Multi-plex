@@ -44,6 +44,9 @@ const (
 	CodeBadRequest = "bad_request"
 	CodeInternal   = "internal"
 	CodeDenied     = "denied"
+	// CodeNotARepo answers workspace.open for a directory outside any git
+	// repository; the TUI shows a dedicated screen for it.
+	CodeNotARepo = "not_a_repo"
 )
 
 func (e *Error) Error() string { return e.Code + ": " + e.Message }

@@ -279,7 +279,52 @@ func TestRegisteredAndCapabilities(t *testing.T) {
 		t.Errorf("DisplayName = %q", a.DisplayName())
 	}
 	c := a.Capabilities()
-	if !c.Hooks || !c.MCP || !c.SideQuestions || !c.Roles || c.Sandbox != (runtime.GOOS != "windows") {
+	if !c.Hooks || !c.MCP || !c.SideQuestions || !c.Roles || !c.InitialPrompt || c.Sandbox != (runtime.GOOS != "windows") {
 		t.Errorf("Capabilities = %+v", c)
+	}
+}
+
+func TestPrepareInitialPrompt(t *testing.T) {
+	claude := fakeClaude(t)
+	tests := map[string]struct {
+		task string
+		want string // "" means no prompt arguments
+	}{
+		"none":        {"", ""},
+		"blank":       {"  \n ", ""},
+		"sentence":    {"fix the login bug", "fix the login bug"},
+		"multi-line":  {"first\nsecond", "first\nsecond"},
+		"dash lead":   {"--version please", "--version please"},
+		"one word":    {"doctor", "Task: doctor"},
+		"trimmed one": {" update\n", "Task: update"},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			spec := baseSpec(t)
+			spec.Task = tt.task
+			spec.AllowedTools = []string{"Read", "Bash(git *)"}
+			spec.DeniedTools = []string{"WebFetch"}
+			l, err := Adapter{}.Prepare(spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if l.Argv[0] != claude {
+				t.Fatalf("argv[0] = %q", l.Argv[0])
+			}
+			n := len(l.Argv)
+			if tt.want == "" {
+				if slices.Contains(l.Argv, "--") {
+					t.Errorf("unexpected -- in %q", l.Argv)
+				}
+				return
+			}
+			if n < 3 || l.Argv[n-2] != "--" || l.Argv[n-1] != tt.want {
+				t.Errorf("argv tail = %q, want -- %q", l.Argv[max(0, n-2):], tt.want)
+			}
+			// The prompt must come after every variadic flag's values.
+			if i := slices.Index(l.Argv, "--disallowedTools"); i < 0 || i > n-3 {
+				t.Errorf("--disallowedTools misplaced in %q", l.Argv)
+			}
+		})
 	}
 }

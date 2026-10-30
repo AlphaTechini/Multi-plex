@@ -70,10 +70,16 @@ func (m *Model) toastRects() (blocks []string, xs, ys []int) {
 		return nil, nil, nil
 	}
 	w := min(toastWidth, l.mainW-4)
+	x := l.x(regionMain) + l.mainW - w - 2
+	if l.drawer {
+		// The agent drawer covers the right of the main view: draw toasts
+		// inside it, so they never straddle its frame.
+		w = min(toastWidth, l.drawerW-4)
+		x = l.w - l.drawerW + 2
+	}
 	if w < 20 {
 		return nil, nil, nil
 	}
-	x := l.x(regionMain) + l.mainW - w - 2
 	y := l.bodyH - 1
 	for i := len(m.toasts) - 1; i >= 0; i-- {
 		ts := m.toasts[i]
@@ -102,7 +108,7 @@ func (m *Model) toastAt(x, y int) int {
 	n := len(m.toasts)
 	for i := range blocks {
 		h := len(strings.Split(blocks[i], "\n"))
-		if x >= xs[i] && x < xs[i]+toastWidth && y >= ys[i] && y < ys[i]+h {
+		if x >= xs[i] && x < xs[i]+kit.Width(strings.SplitN(blocks[i], "\n", 2)[0]) && y >= ys[i] && y < ys[i]+h {
 			return m.toasts[n-1-i].id
 		}
 	}

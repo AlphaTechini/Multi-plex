@@ -14,37 +14,42 @@ import (
 	"github.com/alphatechini/multi-plex/internal/protocol"
 	"github.com/alphatechini/multi-plex/internal/spec"
 	"github.com/alphatechini/multi-plex/internal/ui/kit"
+	"github.com/alphatechini/multi-plex/internal/ui/theme"
 )
 
-// newRoles are the roles offered in the dialog, with their one-line
-// descriptions (docs/10).
-var newRoles = []struct{ name, desc string }{
-	{"orchestrator", "Breaks a goal into tasks and starts sessions for them."},
-	{"planner", "Reads the code and writes a plan or a spec. Does not edit code."},
-	{"implementer", "Writes code against the task and runs the tests before it finishes."},
-	{"researcher", "Investigates a question and reports what it found. Read-only."},
-	{"reviewer", "Reviews a branch and leaves comments. Read-only."},
-	{"resolver", "Resolves merge conflicts between sessions."},
+// fallbackRole is offered when the daemon's role list could not be loaded,
+// so the dialog still works (the daemon applies its own default role).
+var fallbackRole = protocol.RoleInfo{
+	Name: "implementer", Description: "Writes code against the task and runs the tests before it finishes.", Default: true,
 }
-
-const defaultRole = 2 // implementer
 
 // Fields of the dialog.
 const (
 	nsTask = iota
+	nsAgent
 	nsRole
 	nsBase
 	nsFields
 )
 
-// newSessionOverlay is the new-session dialog (docs/05): task, role, base
-// branch.
+// newSessionOverlay is the new-session dialog (docs/05): task, agent, role,
+// base branch. The agent and role lists come from the daemon.
 type newSessionOverlay struct {
-	task  textarea.Model
-	role  int
-	base  lineEdit
-	field int
-	err   string
+	task   textarea.Model
+	agents []protocol.AgentInfo
+	agent  int
+	roles  []protocol.RoleInfo
+	role   int
+	base   lineEdit
+	field  int
+	err    string
+}
+
+// catalogMsg is a fresh agent and role list from the daemon.
+type catalogMsg struct {
+	agents []protocol.AgentInfo
+	roles  []protocol.RoleInfo
+	err    error
 }
 
 // sessionCreatedMsg is the result of CreateSession.
@@ -82,7 +87,116 @@ func newNewSession(m *Model) (*newSessionOverlay, tea.Cmd) {
 	if s := m.session(); s != nil && s.BaseBranch != "" {
 		base = s.BaseBranch
 	}
-	return &newSessionOverlay{task: ta, role: defaultRole, base: newLineEdit(base)}, nil
+	n := &newSessionOverlay{task: ta, base: newLineEdit(base)}
+	n.setCatalog(m.agents, m.roles)
+	return n, m.catalogCmd()
+}
+
+// setCatalog installs the agent and role lists, keeping the current choices
+// by name. The defaults are preselected the first time (and an unavailable
+// default gives way to the first agent that is installed).
+func (n *newSessionOverlay) setCatalog(agents []protocol.AgentInfo, roles []protocol.RoleInfo) {
+	prevAgent, prevRole := n.agentName(), n.roleName()
+	if len(agents) == 0 {
+		agents = []protocol.AgentInfo{{DisplayName: "Default agent", Available: true}}
+	}
+	if len(roles) == 0 {
+		roles = []protocol.RoleInfo{fallbackRole}
+	}
+	n.agents, n.roles = agents, roles
+	n.agent = pickAgent(agents, prevAgent)
+	n.role = pickRole(roles, prevRole)
+}
+
+// agentName and roleName are the chosen names ("" before a catalog is set).
+func (n *newSessionOverlay) agentName() string {
+	if n.agent < len(n.agents) {
+		return n.agents[n.agent].Name
+	}
+	return ""
+}
+
+func (n *newSessionOverlay) roleName() string {
+	if n.role < len(n.roles) {
+		return n.roles[n.role].Name
+	}
+	return ""
+}
+
+// pickAgent returns the index of keep, else of the default agent when it is
+// installed, else of the first installed agent, else 0.
+func pickAgent(agents []protocol.AgentInfo, keep string) int {
+	if keep != "" {
+		for i, a := range agents {
+			if a.Name == keep {
+				return i
+			}
+		}
+	}
+	for i, a := range agents {
+		if a.Default && a.Available {
+			return i
+		}
+	}
+	for i, a := range agents {
+		if a.Available {
+			return i
+		}
+	}
+	return 0
+}
+
+// pickRole returns the index of keep, else of the default role, else 0.
+func pickRole(roles []protocol.RoleInfo, keep string) int {
+	for i, r := range roles {
+		if keep != "" && r.Name == keep {
+			return i
+		}
+	}
+	for i, r := range roles {
+		if r.Default {
+			return i
+		}
+	}
+	return 0
+}
+
+// catalogCmd fetches the agent and role lists, so the dialog shows what is
+// installed and defined now.
+func (m *Model) catalogCmd() tea.Cmd {
+	be, ws := m.be, m.ws.ID
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		var out catalogMsg
+		agents, aerr := be.Agents(ctx)
+		roles, rerr := be.Roles(ctx, ws)
+		out.agents, out.roles = agents, roles
+		if aerr != nil {
+			out.agents, out.err = nil, aerr
+		}
+		if rerr != nil {
+			out.roles, out.err = nil, rerr
+		}
+		return out
+	}
+}
+
+// handleCatalog stores a fresh catalog and offers it to the open dialog.
+func (m *Model) handleCatalog(c catalogMsg) tea.Cmd {
+	if c.agents != nil {
+		m.agents = c.agents
+	}
+	if c.roles != nil {
+		m.roles = c.roles
+		m.info.Roles = len(c.roles)
+	}
+	for _, o := range m.overlays {
+		if n, ok := o.(*newSessionOverlay); ok {
+			n.setCatalog(m.agents, m.roles)
+		}
+	}
+	return nil
 }
 
 // slugPreview mirrors how the daemon derives a session name from the task:
@@ -122,6 +236,14 @@ func (n *newSessionOverlay) update(m *Model, msg tea.Msg) (overlay, tea.Cmd) {
 	return n, nil
 }
 
+// cycle moves a choice by d, wrapping.
+func cycle(i, d, n int) int {
+	if n == 0 {
+		return 0
+	}
+	return (i + d + n) % n
+}
+
 func (n *newSessionOverlay) key(m *Model, k tea.KeyPressMsg) (overlay, tea.Cmd) {
 	n.err = ""
 	switch k.String() {
@@ -143,12 +265,21 @@ func (n *newSessionOverlay) key(m *Model, k tea.KeyPressMsg) (overlay, tea.Cmd) 
 		var cmd tea.Cmd
 		n.task, cmd = n.task.Update(k)
 		return n, cmd
+	case nsAgent:
+		switch k.String() {
+		case "left", "h":
+			n.agent = cycle(n.agent, -1, len(n.agents))
+		case "right", "l":
+			n.agent = cycle(n.agent, 1, len(n.agents))
+		case "enter":
+			return n.submit(m)
+		}
 	case nsRole:
 		switch k.String() {
 		case "left", "h":
-			n.role = (n.role + len(newRoles) - 1) % len(newRoles)
+			n.role = cycle(n.role, -1, len(n.roles))
 		case "right", "l":
-			n.role = (n.role + 1) % len(newRoles)
+			n.role = cycle(n.role, 1, len(n.roles))
 		case "enter":
 			return n.submit(m)
 		}
@@ -178,9 +309,14 @@ func (n *newSessionOverlay) submit(m *Model) (overlay, tea.Cmd) {
 		n.focusField(nsTask)
 		return n, nil
 	}
+	if a := n.agents[n.agent]; !a.Available {
+		n.err = a.DisplayName + " is not installed. Pick another agent or install it first."
+		n.focusField(nsAgent)
+		return n, nil
+	}
 	cols, rows := m.lay.agentInner()
 	p := protocol.SessionCreateParams{
-		WorkspaceID: m.ws.ID, Task: task, Role: newRoles[n.role].name,
+		WorkspaceID: m.ws.ID, Task: task, Agent: n.agentName(), Role: n.roleName(),
 		BaseBranch: strings.TrimSpace(n.base.String()), Cols: cols, Rows: rows,
 	}
 	be := m.be
@@ -244,22 +380,22 @@ func (n *newSessionOverlay) view(m *Model, screen string) string {
 	n.task.SetWidth(max(w-4, 10))
 	var lines []string
 	add := func(block string) { lines = append(lines, strings.Split(block, "\n")...) }
+	// On a short terminal the blank rows between the sections go, so the
+	// dialog (and its buttons) still fits.
+	gap := func() {
+		if m.h >= 30 {
+			lines = append(lines, "")
+		}
+	}
 
 	add(fieldBox(t, w, "Task", "from a spec task: "+kit.FormatKeys(t.Glyphs, "ctrl+t"),
 		strings.Split(n.task.View(), "\n"), 3, n.field == nsTask))
-	lines = append(lines, "")
-	roleLabel := paint(t.Text.Muted, false, "Role")
-	if n.field == nsRole {
-		roleLabel = paint(t.Text.Strong, true, "Role")
-	}
-	lines = append(lines, kit.Fit(roleLabel, w))
-	names := make([]string, len(newRoles))
-	for i, r := range newRoles {
-		names[i] = r.name
-	}
-	lines = append(lines, kit.Choice(t, kit.ChoiceOptions{Width: w, Options: names, Selected: n.role, Focused: n.field == nsRole}))
-	lines = append(lines, kit.Fit(paint(t.Text.Faint, false, " "+newRoles[n.role].desc), w))
-	lines = append(lines, "")
+	gap()
+	lines = append(lines, n.choiceRows(t, w, "Agent", nsAgent, agentLabels(n.agents), n.agent, n.agentDetail(t))...)
+	gap()
+	lines = append(lines, n.choiceRows(t, w, "Role", nsRole, roleNames(n.roles), n.role,
+		paint(t.Text.Faint, false, " "+n.roles[n.role].Description))...)
+	gap()
 
 	half := (w - 2) / 2
 	cursor := func(s string) string { return paintBg(t.Text.Strong, t.Accent.Base, false, s) }
@@ -273,14 +409,62 @@ func (n *newSessionOverlay) view(m *Model, screen string) string {
 	wt := kit.Fit(paint(t.Text.Muted, false, "Branch and worktree"), w-half-2) + "\n" +
 		kit.Fit(paint(t.Text.Secondary, false, t.Glyphs.Branch+" "+branch), w-half-2)
 	add(kit.JoinColumns(base, "  \n  ", wt))
-	lines = append(lines, "")
+	gap()
 	if n.err != "" {
 		lines = append(lines, kit.Fit(paint(t.Severity.Warning, false, t.Glyphs.Blocked+" "+n.err), w))
 	} else {
-		lines = append(lines, kit.Fit(paint(t.Text.Faint, false, "A worktree and branch are created first; setup then runs in the background."), w))
+		for _, l := range kit.Wrap("A worktree and branch are created first; setup then runs in the background.", w) {
+			lines = append(lines, kit.Fit(paint(t.Text.Faint, false, l), w))
+		}
 	}
 	mo.Body = strings.Join(lines, "\n")
 	return kit.Modal(t, mo)
+}
+
+// choiceRows draws a labelled choice with a detail line under it.
+func (n *newSessionOverlay) choiceRows(t *theme.Theme, w int, label string, field int, options []string, sel int, detail string) []string {
+	l := paint(t.Text.Muted, false, label)
+	if n.field == field {
+		l = paint(t.Text.Strong, true, label)
+	}
+	return []string{
+		kit.Fit(l, w),
+		kit.Choice(t, kit.ChoiceOptions{Width: w, Options: options, Selected: sel, Focused: n.field == field}),
+		kit.Fit(detail, w),
+	}
+}
+
+// agentDetail is the line under the agent choice: where the agent was found,
+// or why it cannot be used.
+func (n *newSessionOverlay) agentDetail(t *theme.Theme) string {
+	a := n.agents[n.agent]
+	if !a.Available {
+		msg := a.Detail
+		if msg == "" {
+			msg = a.DisplayName + " was not found on PATH"
+		}
+		return paint(t.Severity.Warning, false, " "+t.Glyphs.Blocked+" "+msg)
+	}
+	if a.Detail == "" {
+		return ""
+	}
+	return paint(t.Text.Faint, false, " "+a.Detail)
+}
+
+func agentLabels(as []protocol.AgentInfo) []string {
+	out := make([]string, len(as))
+	for i, a := range as {
+		out[i] = orStr(a.DisplayName, a.Name)
+	}
+	return out
+}
+
+func roleNames(rs []protocol.RoleInfo) []string {
+	out := make([]string, len(rs))
+	for i, r := range rs {
+		out[i] = r.Name
+	}
+	return out
 }
 
 func orStr(s, d string) string {

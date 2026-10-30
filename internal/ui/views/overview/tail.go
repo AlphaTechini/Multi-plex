@@ -104,7 +104,8 @@ func (m *model) specGroup(cw int) []string {
 	pw := min(28, max(cw-nameW-12-len(strconv.Itoa(sp.CriteriaTotal))-10, 8))
 	row := kit.PadRight(paint(t.Text.Primary, false, kit.Truncate(clean(sp.Slug, true), nameW-1, "…")), nameW) +
 		kit.Progress(t, kit.ProgressOptions{Width: pw, Done: sp.TasksDone, Total: sp.TasksTotal, Label: true}) +
-		paint(t.Text.Muted, false, "  tasks   "+noun(sp.CriteriaTotal, "criterion", "criteria"))
+		paint(t.Text.Muted, false, "  tasks   "+strconv.Itoa(sp.CriteriaVerified)+"/"+strconv.Itoa(sp.CriteriaTotal)+" "+
+			plural(sp.CriteriaTotal, "criterion", "criteria")+" verified")
 	return []string{m.sectionLine(cw, "Spec", "", 0), kit.Fit(row, cw)}
 }
 

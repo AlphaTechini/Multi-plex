@@ -41,10 +41,12 @@ func (b *Backend) Session(ctx context.Context, id core.SessionID) (protocol.Sess
 		Conflicts:   append([]core.Conflict(nil), b.conflicts[id]...),
 		Changes:     changesOf(s.Slug),
 		Checkpoints: 2,
+		Turn:        b.turns[id],
 	}
 	if sum := b.summaries[id]; sum != nil {
 		c := *sum
 		d.Summary = &c
+		d.Reports = b.reports[id]
 	} else {
 		d.LastMessage = lastSay(b.panes[s.AgentPane])
 	}
@@ -119,6 +121,7 @@ func (b *Backend) CreateSession(ctx context.Context, p protocol.SessionCreatePar
 		State: core.StateStarting, StateDetail: "creating worktree", AgentPane: paneID, CreatedAt: now, UpdatedAt: now,
 	}
 	b.sessions = append(b.sessions, s)
+	b.turns[id] = 1
 	pane := newAgentPane(s, b.now)
 	pane.entries = []entry{{kind: entUser, text: p.Task}}
 	if p.Cols > 0 && p.Rows > 0 {
@@ -291,6 +294,7 @@ func (b *Backend) userMessageLocked(s *core.Session, text string) {
 		return
 	}
 	p.entries = append(p.entries, entry{kind: entUser, text: text})
+	b.turns[s.ID]++
 	p.working, p.startedT = true, b.now()
 	if s.State != core.StateWorking {
 		s.State, s.StateDetail, s.UpdatedAt = core.StateWorking, "", b.now()

@@ -6,6 +6,7 @@ package clientbackend
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/alphatechini/multi-plex/internal/client"
 	"github.com/alphatechini/multi-plex/internal/protocol"
@@ -19,6 +20,9 @@ type Backend struct {
 
 	subOnce sync.Once
 	subErr  error
+
+	helloOnce sync.Once
+	approver  atomic.Pointer[string] // the daemon's approval method, from hello
 }
 
 var _ backend.Backend = (*Backend)(nil)

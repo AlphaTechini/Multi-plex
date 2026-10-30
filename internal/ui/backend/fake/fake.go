@@ -8,6 +8,7 @@ package fake
 import (
 	"context"
 	"encoding/json"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -53,6 +54,8 @@ type Backend struct {
 	panes     map[core.PaneID]*fakePane
 	conflicts map[core.SessionID][]core.Conflict
 	specs     []protocol.SpecInfo
+	turns     map[core.SessionID]int // prompts submitted
+	reports   map[core.SessionID]int // progress reports
 	seq       int
 	now       func() time.Time
 	delay     time.Duration
@@ -98,9 +101,19 @@ func WithApprovalDelay(d time.Duration) Option { return func(c *config) { c.dela
 // WithClock sets the clock used for timestamps (tests).
 func WithClock(now func() time.Time) Option { return func(c *config) { c.now = now } }
 
+// defaultMethod is the approval method a real daemon would report on this
+// platform when nothing better is available: Windows Hello on Windows, the
+// typed code elsewhere.
+func defaultMethod() string {
+	if runtime.GOOS == "windows" {
+		return "windows-hello"
+	}
+	return "typed-code"
+}
+
 // New creates a seeded fake backend.
 func New(opts ...Option) *Backend {
-	c := config{root: defaultRoot, method: "windows-hello", now: time.Now}
+	c := config{root: defaultRoot, method: defaultMethod(), now: time.Now}
 	for _, o := range opts {
 		o(&c)
 	}
@@ -112,6 +125,8 @@ func New(opts ...Option) *Backend {
 		comments:  map[core.SessionID][]core.Comment{},
 		panes:     map[core.PaneID]*fakePane{},
 		conflicts: map[core.SessionID][]core.Conflict{},
+		turns:     map[core.SessionID]int{},
+		reports:   map[core.SessionID]int{},
 		method:    c.method,
 		now:       c.now,
 		delay:     c.delay,

@@ -9,6 +9,7 @@ const (
 	TopicPaneFrame       = "pane.frame"        // PaneFrame (changed rows only)
 	TopicPaneExited      = "pane.exited"       // core.Pane
 	TopicNote            = "note.added"        // core.Note
+	TopicNoteDismissed   = "note.dismissed"    // core.Note (Dismissed set)
 	TopicSummary         = "summary.updated"   // core.Summary
 	TopicApprovalPending = "approval.pending"  // ApprovalPending
 	TopicApprovalDone    = "approval.resolved" // core.ApprovalDecision

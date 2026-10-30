@@ -140,6 +140,7 @@ func (b *Backend) ActOnNote(ctx context.Context, p protocol.NoteActParams) error
 			}
 			if p.Action == core.NoteDismiss {
 				list[i].Dismissed = true
+				b.emit(protocol.TopicNoteDismissed, list[i])
 				return ctxErr(ctx)
 			}
 			if s := b.session(sid); s != nil && p.Action != core.NoteAsk {

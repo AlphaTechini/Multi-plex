@@ -91,6 +91,7 @@ The core never depends on a specific CLI. Each CLI gets an **adapter** that decl
 | Report state | hooks (tool use, notification, stop) | hooks or output heuristics |
 | OS-level write restriction | its built-in sandbox on macOS, Linux and WSL2 (not native Windows) | per CLI |
 | Structured summaries and notes | MCP server `mpx mcp` | MCP where supported |
+| First task | the prompt argument of the command line (`claude -- <task>`), so first-run menus never see it as keystrokes (`InitialPrompt`); CLIs without it get the task typed after start-up | per CLI |
 | Side questions | its own `/btw` typed into the PTY | per CLI |
 | Roles | launch flags and subagent files | per CLI |
 

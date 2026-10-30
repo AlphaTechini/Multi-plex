@@ -79,6 +79,9 @@ func (d *Daemon) buildRoutes() map[string]route {
 	add(protocol.MethodCheckpointList, typed(d.hCheckpointList))
 	add(protocol.MethodCheckpointRestore, typed(d.hCheckpointRestore))
 
+	add(protocol.MethodAgentList, typed(d.hAgentList))
+	add(protocol.MethodRoleList, typed(d.hRoleList))
+
 	add(protocol.MethodSpecList, typed(d.hSpecList))
 	add(protocol.MethodSpecGet, typed(d.hSpecGet))
 

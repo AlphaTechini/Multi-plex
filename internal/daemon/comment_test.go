@@ -117,6 +117,10 @@ func TestNoteActions(t *testing.T) {
 		t.Error("unknown note accepted")
 	}
 	h.mustCall(protocol.MethodNoteAct, protocol.NoteActParams{NoteID: n.ID, Action: core.NoteDismiss}, nil)
+	gone := decode[core.Note](t, h.ev.wait(t, protocol.TopicNoteDismissed, nil))
+	if gone.ID != n.ID || gone.Number != 1 || !gone.Dismissed {
+		t.Errorf("note.dismissed = %+v", gone)
+	}
 	var notes []core.Note
 	h.mustCall(protocol.MethodNoteList, protocol.SessionRef{SessionID: sess.ID}, &notes)
 	if len(notes) != 1 || !notes[0].Dismissed {

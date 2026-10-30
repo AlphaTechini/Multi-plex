@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"strings"
 
 	"github.com/alphatechini/multi-plex/internal/core"
 	"github.com/alphatechini/multi-plex/internal/protocol"
@@ -22,7 +23,10 @@ func (d *Daemon) hWorkspaceOpen(ctx context.Context, _ *conn, p protocol.Workspa
 	}
 	root, err := d.vcs.RepoRoot(ctx, abs)
 	if err != nil {
-		return nil, badRequest("%s is not inside a git repository: %v", abs, err)
+		if strings.Contains(err.Error(), "not a git repository") { // git runs with LC_ALL=C
+			return nil, &protocol.Error{Code: protocol.CodeNotARepo, Message: abs + " is not inside a git repository"}
+		}
+		return nil, badRequest("cannot open %s as a repository: %v", abs, err)
 	}
 	root = filepath.Clean(root)
 

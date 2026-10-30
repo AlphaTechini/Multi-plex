@@ -16,7 +16,9 @@ import (
 // launchAgent starts the session's agent in its worktree. A failure never
 // returns an error: the session goes to the error state with a StateDetail
 // that says what to do (for example how to install a missing agent).
-// first is true for the session's first launch, which types the task.
+// first is true for the session's first launch, which delivers the task: on
+// the command line for adapters with InitialPrompt, typed after the agent
+// starts for the others.
 func (d *Daemon) launchAgent(ctx context.Context, s *session, ws core.Workspace, cols, rows int, first bool) {
 	info := s.snap()
 	a, err := adapterFor(info)
@@ -50,6 +52,10 @@ func (d *Daemon) launchAgent(ctx context.Context, s *session, ws core.Workspace,
 		DenyRead:      d.policyFor(info).DenyRead,
 		Instructions:  agentInstructions,
 	}
+	caps := a.Capabilities()
+	if first && caps.InitialPrompt {
+		spec.Task = info.Task
+	}
 	launch, err := a.Prepare(spec)
 	if err != nil {
 		d.ports.Release(info.ID)
@@ -60,7 +66,7 @@ func (d *Daemon) launchAgent(ctx context.Context, s *session, ws core.Workspace,
 	s.mu.Lock()
 	s.stopping = false
 	s.gate = nil // rules may have changed since the last launch
-	if first && a.Capabilities().Hooks && strings.TrimSpace(info.Task) != "" {
+	if first && caps.Hooks && !caps.InitialPrompt && strings.TrimSpace(info.Task) != "" {
 		s.taskPending = true
 	}
 	s.mu.Unlock()

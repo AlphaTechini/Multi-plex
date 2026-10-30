@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,6 +61,13 @@ func TestSessionLifecycle(t *testing.T) {
 	h.mustCall(protocol.MethodPaneSnapshot, protocol.PaneRef{PaneID: pn.ID}, &snap)
 	if snap.Cols != 60 || snap.Rows != 8 {
 		t.Errorf("snapshot after resize = %dx%d", snap.Cols, snap.Rows)
+	}
+	// Opening again while the shell runs (a UI that reattached) returns the
+	// same shell at the new size instead of starting another.
+	var again core.Pane
+	h.mustCall(protocol.MethodPaneOpen, protocol.PaneOpenParams{SessionID: s1.ID, Cols: 70, Rows: 9}, &again)
+	if again.ID != pn.ID || again.Cols != 70 || again.Rows != 9 {
+		t.Errorf("reopened shell = %+v, want pane %s at 70x9", again, pn.ID)
 	}
 	h.mustCall(protocol.MethodPaneClose, protocol.PaneRef{PaneID: pn.ID}, nil)
 	h.ev.wait(t, protocol.TopicPaneExited, func(raw json.RawMessage) bool { return decode[core.Pane](t, raw).ID == pn.ID })
@@ -153,8 +161,10 @@ func TestCreateValidation(t *testing.T) {
 			t.Errorf("%s: create succeeded", name)
 		}
 	}
-	if err := h.call(protocol.MethodWorkspaceOpen, protocol.WorkspaceOpenParams{Dir: t.TempDir()}, nil); err == nil {
-		t.Error("opening a non-repository succeeded")
+	err := h.call(protocol.MethodWorkspaceOpen, protocol.WorkspaceOpenParams{Dir: t.TempDir()}, nil)
+	var perr *protocol.Error
+	if !errors.As(err, &perr) || perr.Code != protocol.CodeNotARepo {
+		t.Errorf("opening a non-repository: %v, want code %s", err, protocol.CodeNotARepo)
 	}
 	if err := h.call("no.such.method", protocol.Empty{}, nil); err == nil {
 		t.Error("unknown method succeeded")
@@ -306,4 +316,16 @@ func TestLateSubscriberSeesPendingApproval(t *testing.T) {
 		t.Errorf("late = %+v, first = %+v", late, first)
 	}
 	h.mustCall(protocol.MethodApprovalRespond, protocol.ApprovalRespondParams{RequestID: first.Request.ID, Outcome: core.Denied}, nil)
+}
+
+func TestCreateInRepositoryWithoutCommits(t *testing.T) {
+	h := newHarness(t)
+	empty := t.TempDir()
+	gitRun(t, empty, "init", "-q", "-b", "main")
+	var ws core.Workspace
+	h.mustCall(protocol.MethodWorkspaceOpen, protocol.WorkspaceOpenParams{Dir: empty}, &ws)
+	err := h.call(protocol.MethodSessionCreate, protocol.SessionCreateParams{WorkspaceID: ws.ID, Task: "x", Agent: "shell"}, nil)
+	if err == nil || !strings.Contains(err.Error(), "no commits yet") {
+		t.Errorf("create in an empty repository: %v, want a message about missing commits", err)
+	}
 }

@@ -45,6 +45,11 @@ func (m *Model) activateMode(mode view.Mode) tea.Cmd {
 	}
 	m.viewOf(mode)
 	var cmds []tea.Cmd
+	// A view built after the last resize has not been told its size (announce
+	// only reports changes); the Term view opens its shell at that size.
+	if cols, rows := m.lastMain[0], m.lastMain[1]; cols > 0 && rows > 0 {
+		cmds = append(cmds, m.sendView(mode, tea.WindowSizeMsg{Width: cols, Height: rows}))
+	}
 	if told, ok := m.told[mode]; !ok || told != m.cur {
 		m.told[mode] = m.cur
 		var sel *core.Session

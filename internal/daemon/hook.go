@@ -47,6 +47,9 @@ func (d *Daemon) hHook(ctx context.Context, _ *conn, p protocol.HookParams) (any
 	case agent.HookStop:
 		d.hookStop(s)
 	case agent.HookPromptSubmit:
+		s.mu.Lock()
+		s.turn++
+		s.mu.Unlock()
 		d.markWorking(s)
 	case agent.HookSessionStart:
 		d.hookSessionStart(s)
@@ -147,7 +150,8 @@ func (d *Daemon) afterTurn(s *session) {
 }
 
 // hookSessionStart types the task into a hook-capable agent when it has
-// started, once. The short delay lets its input box appear.
+// started, once. The short delay lets its input box appear. Adapters with
+// InitialPrompt never get here: they receive the task at launch.
 func (d *Daemon) hookSessionStart(s *session) {
 	s.mu.Lock()
 	typeIt := s.taskPending && !s.taskTyped

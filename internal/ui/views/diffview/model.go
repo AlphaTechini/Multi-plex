@@ -72,6 +72,7 @@ type Model struct {
 	comments []core.Comment
 	cmp      *composer
 	saves    []core.Comment // relocated comments to store
+	undo     undoQueue
 
 	// UI state.
 	railHidden bool

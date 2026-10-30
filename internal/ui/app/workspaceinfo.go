@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/alphatechini/multi-plex/internal/core"
-	"github.com/alphatechini/multi-plex/internal/role"
 )
 
 // steeringItem is one entry of the sidebar's STEERING section.
@@ -27,8 +26,8 @@ type workspaceInfo struct {
 }
 
 // probeWorkspace looks at the workspace on disk: steering files that exist,
-// and the number of roles, skills and MCP servers. It does file I/O, so the
-// shell calls it only from a command.
+// and the number of skills and MCP servers. It does file I/O, so the shell
+// calls it only from a command. The roles count comes from the daemon.
 func probeWorkspace(ws core.Workspace) workspaceInfo {
 	var info workspaceInfo
 	if ws.Root == "" {
@@ -49,9 +48,6 @@ func probeWorkspace(ws core.Workspace) workspaceInfo {
 	}
 	if isDir(filepath.Join(ws.Root, ".multiplex")) {
 		info.Steering = append(info.Steering, steeringItem{Label: ".multiplex/", Path: ".multiplex", Dir: true})
-	}
-	if roles, _ := role.Load(ws.Root, ""); roles != nil {
-		info.Roles = len(roles)
 	}
 	info.Skills = countEntries(filepath.Join(ws.Root, ".multiplex", "skills")) + countEntries(filepath.Join(ws.Root, ".claude", "skills"))
 	info.MCP = countMCPServers(filepath.Join(ws.Root, ".mcp.json"))

@@ -60,7 +60,7 @@ func (m *model) insights(c *canvas, cw, h int) {
 	heights := make([]int, len(m.cards))
 	for i, n := range m.cards {
 		o := kit.CardOptions{
-			Width: cw, Number: i + 1, Severity: severity(n.Severity),
+			Width: cw, Number: cardNumber(n, i), Severity: severity(n.Severity),
 			Title: clean(n.Title, true), Body: clean(n.Body, false),
 			Refs: cleanAll(n.Refs), Age: age(m.clock.Sub(n.At)),
 			Actions:  cardActions,
@@ -102,6 +102,16 @@ func (m *model) insights(c *canvas, cw, h int) {
 		c.text(kit.Fit(paint(t.Text.Muted, false, "   "+t.Glyphs.ArrowDown+" "+strconv.Itoa(more)+" more "+pluralCard(more)+" below"), cw))
 	}
 	m.addTail(c, tail)
+}
+
+// cardNumber is the number shown on a card: the stable per-session number the
+// agent and steer messages refer to ("Re card #2"), not the card's position.
+// A card without one (a daemon that predates numbering) shows its position.
+func cardNumber(n core.Note, pos int) int {
+	if n.Number > 0 {
+		return n.Number
+	}
+	return pos + 1
 }
 
 func pluralCard(n int) string {

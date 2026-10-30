@@ -37,8 +37,9 @@ func (m *model) summary(c *canvas, cw, h int) {
 		return
 	}
 	meta := ""
-	if m.reports > 0 {
-		meta = "report " + strconv.Itoa(m.reports) + " of " + strconv.Itoa(m.reports)
+	if n := m.detail.Reports; n > 0 {
+		// The summary shown is always the latest of the n reports.
+		meta = "report " + strconv.Itoa(n) + " of " + strconv.Itoa(n)
 	}
 	c.text(m.sectionLine(cw, "Summary", meta, 0))
 	compact := h < 40

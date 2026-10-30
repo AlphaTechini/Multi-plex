@@ -95,6 +95,8 @@ func mockDetail() protocol.SessionDetail {
 				Body:  "Refresh now takes a cache argument. Callers in api/ and worker/ need updating; api-pagination also edits src/api/client.go.",
 				Refs:  []string{"src/auth/session.go:L38-L52"}},
 		},
+		Turn:    6,
+		Reports: 6,
 		Conflicts: []core.Conflict{{SessionID: "s1", OtherBranch: "mpx/api-pagination", OtherSession: "s2",
 			Files: []string{"src/api/client.go"}}},
 	}
@@ -108,11 +110,10 @@ func newFixture(t testing.TB, th *theme.Theme) (*model, *fakeBackend) {
 	m.now = func() time.Time { return epoch }
 	s := be.detail.Session
 	exec(t, m, send(m, view.SessionMsg{Session: &s}))
-	m.reports = 6
 	m.frame = 2
 	m.seen["n3"] = true
 	m.checkedAt = epoch.Add(-time.Minute)
-	m.spec = &protocol.SpecInfo{Slug: "token-refresh", TasksDone: 3, TasksTotal: 7, CriteriaTotal: 9}
+	m.spec = &protocol.SpecInfo{Slug: "token-refresh", TasksDone: 3, TasksTotal: 7, CriteriaTotal: 9, CriteriaVerified: 5}
 	return m, be
 }
 

@@ -36,6 +36,8 @@ type Model struct {
 	cur      core.SessionID // the session the main view belongs to
 	notes    map[core.SessionID]int
 	specs    []protocol.SpecInfo
+	agents   []protocol.AgentInfo // from the daemon, for the new-session dialog
+	roles    []protocol.RoleInfo  // likewise; their count is the sidebar's ROLES
 	info     workspaceInfo
 
 	mode       view.Mode
@@ -67,6 +69,9 @@ type Model struct {
 	pendingSelect string
 
 	loadErr string
+	// notRepo is set when the start directory is outside any git repository:
+	// the main panel explains it instead of showing an error.
+	notRepo bool
 	quit    bool
 
 	bench benchState

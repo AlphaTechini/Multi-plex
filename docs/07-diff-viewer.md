@@ -72,6 +72,7 @@ Review comments (session: auth-refactor):
    ...
 ````
 
+- Queuing a comment shows a toast with `ctrl+s` (send now) and `u` (undo) for as long as the toast is on screen; `u` deletes that comment if it has not been sent.
 - Wrapper mode: the message is typed into the agent's input. Whether it arrives as a queued message or interrupts depends on the CLI (CC-08).
 - Native mode: delivered as a user message with the comments attached as structured data.
 - After the agent's next turn, each comment shows whether the lines it points to changed.

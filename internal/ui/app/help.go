@@ -81,6 +81,14 @@ func (h *helpOverlay) view(m *Model, screen string) string {
 		kit.Fit(paint(t.Text.Secondary, false, "Quitting only detaches: the daemon and your sessions keep running."), w),
 		"",
 	}
+	// The label column starts two cells after the widest key cap.
+	keyW := 0
+	for _, rs := range rows {
+		for _, r := range rs {
+			keyW = max(keyW, kit.Width(kit.Keycap(t, r.keys)))
+		}
+	}
+	keyW += 2
 	for i, title := range titles {
 		if len(rows[i]) == 0 {
 			continue
@@ -90,7 +98,7 @@ func (h *helpOverlay) view(m *Model, screen string) string {
 		}
 		lines = append(lines, kit.Fit(paint(t.Text.Muted, true, strings.ToUpper(title)), w))
 		for _, r := range rows[i] {
-			lines = append(lines, kit.Fit(kit.PadRight(kit.Keycap(t, r.keys), 20)+paint(t.Text.Secondary, false, r.label), w))
+			lines = append(lines, kit.Fit(kit.PadRight(kit.Keycap(t, r.keys), keyW)+paint(t.Text.Secondary, false, r.label), w))
 		}
 	}
 	room := max(m.h-10, 5)

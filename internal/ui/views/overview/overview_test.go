@@ -105,6 +105,7 @@ func TestEventsReloadOnlyForThisSession(t *testing.T) {
 	}{
 		{"note other", ev(protocol.TopicNote, core.Note{SessionID: "other"}), 0},
 		{"note", ev(protocol.TopicNote, core.Note{SessionID: "s1"}), 1},
+		{"note dismissed other", ev(protocol.TopicNoteDismissed, core.Note{ID: "n1", SessionID: "other", Dismissed: true}), 0},
 		{"summary", ev(protocol.TopicSummary, core.Summary{SessionID: "s1"}), 1},
 		{"conflicts", ev(protocol.TopicConflicts, protocol.ConflictsEvent{SessionID: "s1"}), 1},
 		{"session same state", ev(protocol.TopicSession, core.Session{ID: "s1", State: core.StateWorking}), 0},
@@ -120,6 +121,48 @@ func TestEventsReloadOnlyForThisSession(t *testing.T) {
 	}
 	if m.detail.Session.State != core.StateWorking && m.sess.State != core.StateBlocked {
 		t.Error("session state not applied")
+	}
+}
+
+func TestNoteDismissedEventHidesTheCard(t *testing.T) {
+	m, be := newFixture(t, theme.DarkPlus())
+	// Dismissed from another client: the daemon has not removed it from the
+	// next detail yet, but the event hides it at once.
+	before := be.loads
+	exec(t, m, send(m, view.EventMsg{Topic: protocol.TopicNoteDismissed, Data: mustJSON(core.Note{ID: "n1", SessionID: "s1", Number: 1, Dismissed: true})}))
+	if be.loads == before {
+		t.Error("note.dismissed did not reload")
+	}
+	if len(m.cards) != 2 || m.cards[0].ID != "n2" {
+		t.Errorf("cards after note.dismissed = %+v", m.cards)
+	}
+	if _, badge := m.Tab(); badge != 2 {
+		t.Errorf("badge = %d, want 2", badge)
+	}
+}
+
+func TestCardNumbersAreStable(t *testing.T) {
+	m, be := newFixture(t, theme.DarkPlus())
+	// The agent's third and fourth cards, newest first on screen: they keep
+	// the numbers #4 and #3 that steer messages refer to.
+	be.detail.Notes = []core.Note{
+		{ID: "a", SessionID: "s1", Number: 3, Title: "Third card", At: epoch.Add(-5 * time.Minute)},
+		{ID: "b", SessionID: "s1", Number: 4, Title: "Fourth card", At: epoch.Add(-time.Minute)},
+	}
+	exec(t, m, send(m, view.EventMsg{Topic: protocol.TopicNote, Data: mustJSON(core.Note{SessionID: "s1"})}))
+	text := strings.Join(plain(m.Render(90, 45)), "\n")
+	i4, i3 := strings.Index(text, "4 INFO"), strings.Index(text, "3 INFO")
+	if i4 < 0 || i3 < 0 || i4 > i3 {
+		t.Fatalf("want card 4 above card 3:\n%s", text)
+	}
+	// A digit selects by shown number, and steer reports it.
+	send(m, key("3"))
+	if m.sel != 1 {
+		t.Errorf("digit 3 selected row %d, want 1", m.sel)
+	}
+	send(m, key("s"))
+	if m.in == nil || m.in.number != 3 {
+		t.Fatalf("steer box = %+v, want card 3", m.in)
 	}
 }
 

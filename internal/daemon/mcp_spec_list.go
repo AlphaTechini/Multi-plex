@@ -12,7 +12,8 @@ import (
 // mcpSpecList lists the specs the session can see, as JSON.
 func (d *Daemon) mcpSpecList(ctx context.Context, s *session, _ json.RawMessage) (string, error) {
 	seen := map[string]protocol.SpecInfo{}
-	for _, root := range d.specRoots(ctx, s) {
+	roots := d.specRoots(ctx, s)
+	for _, root := range roots {
 		infos, err := spec.List(root)
 		if err != nil {
 			return "", err
@@ -24,6 +25,7 @@ func (d *Daemon) mcpSpecList(ctx context.Context, s *session, _ json.RawMessage)
 			seen[in.Slug] = protocol.SpecInfo{
 				Slug: in.Slug, Title: in.Title,
 				TasksDone: in.TasksDone, TasksTotal: in.TasksTotal, CriteriaTotal: in.CriteriaTotal,
+				CriteriaVerified: verifiedCriteria(roots, in.Slug),
 			}
 		}
 	}

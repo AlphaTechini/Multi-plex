@@ -102,6 +102,11 @@ func (m *Model) handleEvent(ev backend.Event) tea.Cmd {
 		if json.Unmarshal(ev.Data, &n) == nil && !n.Dismissed {
 			m.notes[n.SessionID]++
 		}
+	case protocol.TopicNoteDismissed:
+		var n core.Note
+		if json.Unmarshal(ev.Data, &n) == nil && m.notes[n.SessionID] > 0 {
+			m.notes[n.SessionID]--
+		}
 	case protocol.TopicApprovalPending:
 		var p protocol.ApprovalPending
 		if json.Unmarshal(ev.Data, &p) == nil {

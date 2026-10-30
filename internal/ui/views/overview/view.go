@@ -53,11 +53,7 @@ type model struct {
 	names      map[core.SessionID]string
 	spec       *protocol.SpecInfo
 
-	// Report counters: report_progress is called once per turn (docs/08), so
-	// the number of reports seen stands in for the turn number.
-	reports       int
-	lastSummaryAt time.Time
-	checkedAt     time.Time
+	checkedAt time.Time
 
 	cards     []core.Note // visible cards, newest first
 	dismissed map[string]bool

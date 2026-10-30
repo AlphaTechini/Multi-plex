@@ -291,12 +291,46 @@ func (a *approvalOverlay) view(m *Model, screen string) string {
 			{Label: "Deny with message", Keys: "m"},
 		}
 	}
-	mo.Body = a.body(m, pa, iw)
+	mo.Body = a.fittedBody(m, pa, iw)
 	return kit.Modal(t, mo)
 }
 
+// Path rows in the "Affects" field: a few by default, more when listed.
+const (
+	pathsCollapsed = 3
+	pathsExpanded  = 8
+	// modalChrome is the modal's rows besides the body: borders, title,
+	// button row and the blank rows between them.
+	modalChrome = 8
+)
+
+// fittedBody renders the body with as many path rows as the screen has room
+// for, then, if the screen is still too short, clips a very long command, so
+// a short terminal never pushes the buttons off the screen.
+func (a *approvalOverlay) fittedBody(m *Model, pa pendingApproval, w int) string {
+	want := pathsCollapsed
+	if a.showAll {
+		want = pathsExpanded
+	}
+	room := m.h - 2 - modalChrome
+	var body string
+	for shown := min(want, len(pa.req.Paths)); ; shown-- {
+		body = a.body(m, pa, w, shown, 0)
+		if shown <= 0 || len(kit.Lines(body)) <= room {
+			break
+		}
+	}
+	if over := len(kit.Lines(body)) - room; over > 0 && pa.req.Command != "" {
+		rows := len(kit.Wrap(pa.req.Command, max(w-12, 8)))
+		// One row of the budget goes to the "+N more lines" note.
+		body = a.body(m, pa, w, 0, max(rows-over-1, 2))
+	}
+	return body
+}
+
 // body renders the prompt's content (docs/16, "Approval prompt").
-func (a *approvalOverlay) body(m *Model, pa pendingApproval, w int) string {
+// cmdMax > 0 limits the command to that many rows.
+func (a *approvalOverlay) body(m *Model, pa pendingApproval, w, shown, cmdMax int) string {
 	t := m.th
 	req := pa.req
 	const labelW = 10
@@ -311,14 +345,33 @@ func (a *approvalOverlay) body(m *Model, pa pendingApproval, w int) string {
 		}
 	}
 	_, summary := approvalTitle(req.Kind)
-	lines = append(lines, kit.Fit(paint(t.Text.Secondary, false, summary), w), "")
+	for _, l := range kit.Wrap(summary, w) {
+		lines = append(lines, kit.Fit(paint(t.Text.Secondary, false, l), w))
+	}
+	lines = append(lines, "")
 
 	if req.Command != "" {
-		cmd := paint(t.Syntax.Function, false, req.Command)
-		if name, rest, ok := strings.Cut(req.Command, " "); ok {
-			cmd = paint(t.Syntax.Function, false, name) + paint(t.Syntax.Keyword, false, " "+rest)
+		// The exact command is never cut: it wraps on the sunken block.
+		var cmdLines []string
+		wrapped := kit.Wrap(req.Command, max(w-labelW-2, 8))
+		clipped := 0
+		if cmdMax > 0 && len(wrapped) > cmdMax {
+			clipped, wrapped = len(wrapped)-cmdMax, wrapped[:cmdMax]
 		}
-		field("Command", kit.Backfill(kit.Fit(" "+cmd, w-labelW), t.Surface.Sunken))
+		for i, l := range wrapped {
+			c := paint(t.Syntax.Keyword, false, l)
+			if i == 0 {
+				c = paint(t.Syntax.Function, false, l)
+				if name, rest, ok := strings.Cut(l, " "); ok {
+					c = paint(t.Syntax.Function, false, name) + paint(t.Syntax.Keyword, false, " "+rest)
+				}
+			}
+			cmdLines = append(cmdLines, kit.Backfill(kit.Fit(" "+c, w-labelW), t.Surface.Sunken))
+		}
+		if clipped > 0 {
+			cmdLines = append(cmdLines, paint(t.State.Error, false, "+"+itoa(clipped)+" more "+plural(clipped, "line", "lines")+" not shown. Deny, or enlarge the window."))
+		}
+		field("Command", cmdLines...)
 		lines = append(lines, "")
 	}
 	if req.Cwd != "" {
@@ -332,16 +385,20 @@ func (a *approvalOverlay) body(m *Model, pa pendingApproval, w int) string {
 		field("Why", why...)
 	}
 	if n := len(req.Paths); n > 0 {
-		shown := 2
-		if a.showAll {
-			shown = min(n, 8)
-		}
 		vals := []string{paint(t.Text.Primary, false, itoa(n)+" "+plural(n, "path", "paths"))}
 		for _, p := range req.Paths[:min(shown, n)] {
-			vals = append(vals, paint(t.Text.Secondary, false, p))
+			// A long path keeps its end, which names the file.
+			vals = append(vals, paint(t.Text.Secondary, false, kit.TruncateLeft(p, max(w-labelW, 8), t.Glyphs.Ellipsis)))
 		}
-		if n > shown {
-			vals = append(vals, paint(t.Text.Muted, false, "+ "+itoa(n-shown)+" more  ")+kit.KeyHint(t, kit.Hint{Keys: "l", Label: "list all"}))
+		toggle := kit.KeyHint(t, kit.Hint{Keys: "l", Label: "list all"})
+		if a.showAll {
+			toggle = kit.KeyHint(t, kit.Hint{Keys: "l", Label: "fewer"})
+		}
+		switch {
+		case n > shown:
+			vals = append(vals, paint(t.Text.Muted, false, "+"+itoa(n-shown)+" more")+"  "+toggle)
+		case n > pathsCollapsed && a.showAll:
+			vals = append(vals, toggle)
 		}
 		field("Affects", vals...)
 	}
@@ -360,7 +417,9 @@ func (a *approvalOverlay) body(m *Model, pa pendingApproval, w int) string {
 			paint(t.Text.Muted, false, " — confirm on this computer"), w))
 	default:
 		strong, rest := methodLine(pa.method)
-		lines = append(lines, kit.Fit(paint(t.Text.Strong, false, strong)+paint(t.Text.Secondary, false, rest), w))
+		for _, l := range kit.Wrap(paint(t.Text.Strong, false, strong)+paint(t.Text.Secondary, false, rest), w) {
+			lines = append(lines, kit.Fit(l, w))
+		}
 		lines = append(lines, kit.Fit(paint(t.Text.Faint, false, "Session-wide approval for this rule is off."), w))
 	}
 	if a.err != "" {

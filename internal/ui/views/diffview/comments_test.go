@@ -3,6 +3,7 @@ package diffview
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/alphatechini/multi-plex/internal/core"
 	"github.com/alphatechini/multi-plex/internal/diff"
@@ -106,6 +107,65 @@ func TestCommentSendNow(t *testing.T) {
 	}
 	if !hasToast(h, "1 comment sent") {
 		t.Fatalf("toasts %+v", h.toasts)
+	}
+}
+
+func TestQueuedToastOffersUndo(t *testing.T) {
+	h := mockupHarness(t, reduced(), 180)
+	h.render(112, 45)
+	h.selectNew(44, 44)
+	h.writeComment("take this back")
+	h.key("enter")
+	last := h.toasts[len(h.toasts)-1]
+	if !strings.Contains(last.Title, "Comment queued") || len(last.Hints) != 2 ||
+		last.Hints[0].Keys != "ctrl+s" || last.Hints[1].Keys != "u" || last.Hints[1].Label != "undo" {
+		t.Fatalf("queued toast = %+v", last)
+	}
+	if len(h.be.snapshotComments()) != 1 {
+		t.Fatal("comment not stored")
+	}
+	h.key("u")
+	if len(h.be.snapshotComments()) != 0 {
+		t.Fatalf("undo left %d comments in the backend", len(h.be.snapshotComments()))
+	}
+	if strings.Contains(plain(h.render(112, 45)), "take this back") {
+		t.Fatal("undone comment still shown")
+	}
+	if !hasToast(h, "Comment removed") {
+		t.Fatalf("toasts %+v", h.toasts)
+	}
+	// A second u has nothing to take back.
+	n := len(h.toasts)
+	h.key("u")
+	if len(h.toasts) != n {
+		t.Error("u without a queued comment must do nothing")
+	}
+}
+
+func TestUndoExpiresWithTheToast(t *testing.T) {
+	h := mockupHarness(t, reduced(), 180)
+	h.render(112, 45)
+	h.selectNew(44, 44)
+	h.writeComment("too late")
+	h.key("enter")
+	h.clock.advance(h.m.t.Motion.ToastDuration + time.Second)
+	h.key("u")
+	if len(h.be.snapshotComments()) != 1 {
+		t.Fatal("undo worked after the toast expired")
+	}
+}
+
+func TestUndoAfterSendDoesNothing(t *testing.T) {
+	h := mockupHarness(t, reduced(), 180)
+	h.render(112, 45)
+	h.selectNew(44, 44)
+	h.writeComment("sent already")
+	h.key("enter")
+	h.key("ctrl+s")
+	h.key("u")
+	cs := h.be.snapshotComments()
+	if len(cs) != 1 || cs[0].Status != core.CommentSent {
+		t.Fatalf("a sent comment must stay: %+v", cs)
 	}
 }
 

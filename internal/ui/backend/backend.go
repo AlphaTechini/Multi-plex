@@ -60,6 +60,11 @@ type Backend interface {
 	Checkpoints(ctx context.Context, id core.SessionID) ([]core.Checkpoint, error)
 	RestoreCheckpoint(ctx context.Context, id core.SessionID, n int) error
 
+	// Agents lists the agent adapters the daemon can run, with whether each
+	// one's program is installed. Roles lists the roles a workspace offers.
+	Agents(ctx context.Context) ([]protocol.AgentInfo, error)
+	Roles(ctx context.Context, ws core.WorkspaceID) ([]protocol.RoleInfo, error)
+
 	Specs(ctx context.Context, ws core.WorkspaceID) ([]protocol.SpecInfo, error)
 	Spec(ctx context.Context, ws core.WorkspaceID, slug string) (protocol.SpecDoc, error)
 

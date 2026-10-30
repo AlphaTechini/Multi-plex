@@ -40,6 +40,7 @@ func (m *Model) resetSession() {
 	m.files, m.fi, m.fv = nil, -1, nil
 	m.filesVer++
 	m.comments, m.cmp, m.saves = nil, nil, nil
+	m.undo = undoQueue{}
 	m.hlBusy = false
 	m.overlay = false
 	m.hx, m.railTop = 0, 0

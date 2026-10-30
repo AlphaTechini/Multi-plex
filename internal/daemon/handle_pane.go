@@ -8,11 +8,21 @@ import (
 	"github.com/alphatechini/multi-plex/internal/protocol"
 )
 
-// hPaneOpen opens a shell pane in a session's worktree.
+// hPaneOpen opens a shell pane in a session's worktree. A session keeps one
+// shell: when it is still running (a UI that was closed and reopened) it is
+// returned, resized to the new size, instead of starting another.
 func (d *Daemon) hPaneOpen(ctx context.Context, _ *conn, p protocol.PaneOpenParams) (any, error) {
 	s, err := d.getSession(p.SessionID)
 	if err != nil {
 		return nil, err
+	}
+	if pn := d.liveShell(s); pn != nil {
+		if h := pn.host.Load(); h != nil && p.Cols > 0 && p.Rows > 0 && h.Resize(p.Cols, p.Rows) == nil {
+			pn.mu.Lock()
+			pn.info.Cols, pn.info.Rows = p.Cols, p.Rows
+			pn.mu.Unlock()
+		}
+		return pn.snapshotInfo(), nil
 	}
 	sh, ok := agent.Get("shell")
 	if !ok {
@@ -41,6 +51,21 @@ func (d *Daemon) hPaneOpen(ctx context.Context, _ *conn, p protocol.PaneOpenPara
 		return nil, badRequest("cannot start a shell: %v", err)
 	}
 	return pn.snapshotInfo(), nil
+}
+
+// liveShell returns the session's running shell pane, or nil.
+func (d *Daemon) liveShell(s *session) *pane {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	for _, pn := range d.panes {
+		if pn.sess != s || pn.kind != core.PaneShell {
+			continue
+		}
+		if h := pn.host.Load(); h != nil && !h.Exited() {
+			return pn
+		}
+	}
+	return nil
 }
 
 // hPaneClose closes a pane. Closing a session's agent pane stops the agent.
