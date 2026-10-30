@@ -733,3 +733,32 @@ func TestApprovalDotIsStaticWithReducedMotion(t *testing.T) {
 		t.Error("nothing animates, yet a tick is armed")
 	}
 }
+
+// A command too long to show in full can only be denied: approving what is
+// not on screen would defeat the prompt (docs/04).
+func TestApprovalRefusesClippedCommand(t *testing.T) {
+	h := newHarness(t, 80, 24, fake.WithApprovalMethod("windows-hello"))
+	req := core.ApprovalRequest{
+		ID: "apr_long", SessionID: fake.SessionAuth, Kind: core.ApprovalCommand,
+		Command: "rm -rf " + strings.Repeat("/some/very/long/path/outside/the/worktree ", 60),
+		Cwd:     "/work/auth-refactor", Layer: "Layer 4", Rule: "rm-outside",
+	}
+	h.be.Emit(protocol.TopicApprovalPending, protocol.ApprovalPending{Request: req, Method: "windows-hello"})
+	h.pump()
+	if len(h.m.overlays) != 1 {
+		t.Fatalf("overlays %d", len(h.m.overlays))
+	}
+	h.key("enter")
+	h.settle()
+	if n := calls(h, "RespondApproval"); n != 0 {
+		t.Fatalf("approved a clipped command (%d RespondApproval calls)", n)
+	}
+	if !strings.Contains(h.plain(), "does not fit") {
+		t.Fatal("no explanation shown")
+	}
+	h.key("esc")
+	h.settle()
+	if n := calls(h, "RespondApproval"); n != 1 {
+		t.Fatalf("deny must still work, RespondApproval called %d times", n)
+	}
+}

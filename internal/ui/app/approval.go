@@ -217,6 +217,12 @@ func (a *approvalOverlay) key(m *Model, pa pendingApproval, k tea.KeyPressMsg) (
 	switch k.String() {
 	case "enter":
 		a.err = ""
+		if a.commandClipped(m, pa) {
+			// Never approve what is not on screen (docs/04: the prompt shows
+			// the exact command).
+			a.err = "The full command does not fit. Enlarge the window to approve it, or deny."
+			return a, nil
+		}
 		if pa.method == methodTypedCode {
 			a.mode, a.input = apprCode, lineEdit{}
 			return a, nil
@@ -303,6 +309,17 @@ const (
 	// button row and the blank rows between them.
 	modalChrome = 8
 )
+
+// commandClipped reports whether the command must be cut to fit the screen,
+// in which case the prompt refuses to approve.
+func (a *approvalOverlay) commandClipped(m *Model, pa pendingApproval) bool {
+	if pa.req.Command == "" {
+		return false
+	}
+	mo := kit.ModalOptions{Width: 92, ScreenWidth: m.w, ScreenHeight: m.h}
+	body := a.body(m, pa, kit.ModalInnerWidth(mo), 0, 0)
+	return len(kit.Lines(body)) > m.h-2-modalChrome
+}
 
 // fittedBody renders the body with as many path rows as the screen has room
 // for, then, if the screen is still too short, clips a very long command, so
