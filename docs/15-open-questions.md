@@ -4,7 +4,7 @@ Decisions not made yet. When one is decided, record the decision and the reason 
 
 | # | Question | Options | Decided by | Status |
 |---|---|---|---|---|
-| Q1 | Which VT emulator? | libghostty-vt via cgo, or a pure-Go emulator | CC-02, CC-03 | Open |
+| Q1 | Which VT emulator? | libghostty-vt via cgo, or a pure-Go emulator | CC-02, CC-03 | Open. v1 uses pure-Go `charmbracelet/x/vt` behind `internal/vt`. Linux findings (capability-checks/cc-02-vt): renders git, ls, top and vim correctly, but scrolling floods run at ~1.3 MB/s (a 10 MB `cat` takes seconds, missing the docs/03 budget) and wide characters at the right margin are mishandled. Redraw-in-place agent TUIs are unaffected. Fix upstream or switch to libghostty-vt via CC-03 |
 | Q2 | Default prefix key? | Must not clash with Claude Code, opencode or Codex keys, and must reach the app in every target terminal | CC-09 | Proposed: `Ctrl+\` (free in Claude Code, opencode, Codex, Windows Terminal, tmux, macOS); `Ctrl+Space` as the alternative. Terminal delivery still to verify by hand |
 | Q3 | Client/daemon message encoding? | JSON for commands; JSON or a binary format for cell streams | Bench of cell-stream size and CPU in Phase 1 | Open |
 | Q4 | Which agent CLIs besides Claude Code in v1? | opencode, Codex, none | Author's daily use | Open |

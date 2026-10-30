@@ -1,0 +1,129 @@
+{
+  "disableAllHooks": false,
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "notification"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "permission-request"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "post-tool"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "pre-tool"
+            ],
+            "timeout": 600,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "session-end"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "session-start"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "stop"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{MPX}}",
+            "args": [
+              "hook",
+              "prompt-submit"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
